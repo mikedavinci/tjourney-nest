@@ -32,4 +32,8 @@ export class User {
   @Field()
   @UpdateDateColumn({ type: 'timestamptz', nullable: true })
   updatedDate: Date;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  token: string;
 }

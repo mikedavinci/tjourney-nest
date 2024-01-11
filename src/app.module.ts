@@ -10,17 +10,29 @@ import { OneinchModule } from './oneinch/oneinch.module';
 import { AuthModule } from './auth/auth.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
-
 import { UsersModule } from './users/users.module';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
-import { JwtStrategy } from './auth/strategies/jwt.strategy';
 import { HttpModule } from '@nestjs/axios';
+import { JwtStrategy } from './auth/strategies/jwt.strategy';
+import { MailModule } from './mail/mail.module';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 
 @Module({
   imports: [
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: 'schema.gql',
+    }),
     ConfigModule.forRoot({
-      isGlobal: true,
+      envFilePath: [
+        // `.env.${process.env.NODE_ENV}.local`,
+        // `.env.${process.env.NODE_ENV}`,
+        '.env.local',
+        '.env',
+      ],
+
       // validationSchema: Joi.object({
       //   SUPABASE_DATABASE_URL: Joi.string().required(),
       //   DIRECT_URL: Joi.string().required(),
@@ -43,9 +55,9 @@ import { HttpModule } from '@nestjs/axios';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         type: 'postgres',
-        autoLoadEntities: true,
         url: configService.get('DO_DATABASE_URL'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        autoLoadEntities: true,
+        entities: ['dist/**/*.entity{.ts,.js}'],
         logging: true,
         synchronize: true,
         cache: false,
@@ -73,11 +85,13 @@ import { HttpModule } from '@nestjs/axios';
     CoingeckoModule,
     OneinchModule,
     UsersModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     JwtStrategy,
+
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
