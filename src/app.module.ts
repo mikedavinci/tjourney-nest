@@ -32,7 +32,6 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
         '.env.local',
         '.env',
       ],
-
       // validationSchema: Joi.object({
       //   SUPABASE_DATABASE_URL: Joi.string().required(),
       //   DIRECT_URL: Joi.string().required(),
