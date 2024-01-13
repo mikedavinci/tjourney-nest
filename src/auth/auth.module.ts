@@ -11,6 +11,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategies/local-strategy';
+import { RefreshJwtStrategy } from './strategies/refresh-token.strategy';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { LocalStrategy } from './strategies/local-strategy';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET') || process.env.JWT_SECRET,
         signOptions: {
-          expiresIn: 3600, // 1 hour
+          expiresIn: configService.get('JWT_EXPIRATION_TIME'),
         },
       }),
     }),
@@ -35,12 +36,19 @@ import { LocalStrategy } from './strategies/local-strategy';
     JwtStrategy,
     GoogleStrategy,
     LocalStrategy,
+    RefreshJwtStrategy,
     {
       provide: 'AUTH_SERVICE',
       useClass: AuthService,
     },
   ],
   controllers: [AuthController],
-  exports: [JwtStrategy, GoogleStrategy, PassportModule],
+  exports: [
+    JwtStrategy,
+    GoogleStrategy,
+    RefreshJwtStrategy,
+    LocalStrategy,
+    PassportModule,
+  ],
 })
 export class AuthModule {}

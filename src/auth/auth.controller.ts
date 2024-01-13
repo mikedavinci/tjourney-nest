@@ -8,6 +8,7 @@ import { UserSignupDto } from './dto/user-signup.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { GoogleAuthGuard } from './guards/http-google-oath.guard';
 import { UserResponseDto } from 'src/users/dto/user-response.dto';
+import { RefreshJwtAuthGuard } from './guards/refresh-jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -23,6 +24,12 @@ export class AuthController {
     @Body() authCredentialsDto: AuthCredentialsDto,
   ): Promise<UserResponseDto> {
     return this.authService.signIn(authCredentialsDto);
+  }
+
+  @UseGuards(RefreshJwtAuthGuard)
+  @Post('/refresh-token')
+  refreshToken(@Req() request: Request): Promise<any> {
+    return this.authService.refreshToken(request.body.refresh);
   }
 
   @Post('/send-reset-password')

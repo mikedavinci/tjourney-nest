@@ -68,10 +68,26 @@ export class AuthService {
       userResponse.name = user.name;
       userResponse.emailVerified = user.emailVerified;
 
-      return { ...userResponse, access_token: accessToken };
+      return {
+        ...userResponse,
+        access_token: accessToken,
+        refresh_token: this.jwtService.sign(payload, { expiresIn: '7d' }),
+      };
     } else {
       throw new UnauthorizedException('Please check your login credentials');
     }
+  }
+
+  async refreshToken(user: User): Promise<any> {
+    const payload: JwtPayload = {
+      email: user.email,
+      sub: user.id,
+    };
+    const accessToken: string = this.jwtService.sign(payload);
+
+    return {
+      access_token: accessToken,
+    };
   }
 
   async sendResetPassword(email: string) {
