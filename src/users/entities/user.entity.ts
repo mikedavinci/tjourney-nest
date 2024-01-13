@@ -3,26 +3,37 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+// import { v4 as uuidv4 } from 'uuid';
 
 @ObjectType()
 @Entity()
 export class User {
+  // Field of type ID is required for GraphQL
   @Field(() => ID)
-  @PrimaryColumn()
-  user_id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  displayName: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  name: string;
 
   @Field()
   @Column({ unique: true })
   email: string;
 
-  @Field()
-  @Column()
+  @Field({ nullable: true })
+  @Column({ nullable: true })
   password: string;
 
-  @Field(() => GraphQLISODateTime)
+  @Field(() => GraphQLISODateTime, { nullable: true })
+  @Column({ nullable: true })
   emailVerified: Date;
 
   @Field()

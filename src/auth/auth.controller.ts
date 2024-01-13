@@ -1,40 +1,80 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-// import { Request } from 'express';
+import { Request } from 'express';
 
-import { HttpGoogleOAuthGuard } from './guards/http-google-oath.guard';
 import { SendResetPasswordDto } from './dto/send-reset-password.dto';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { UserSignupDto } from './dto/user-signup.dto';
-import { User } from 'src/users/entities/user.entity';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-// import { HttpUser } from './decorators/http-user.decorator';
-// import { GoogleLoginUserDto } from './dto/google-login.dto';
+import { GoogleAuthGuard } from './guards/http-google-oath.guard';
+import { UserResponseDto } from 'src/users/dto/user-response.dto';
 
-@UseGuards(HttpGoogleOAuthGuard)
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('/signup')
-  signUp(@Body() userSignupDto: UserSignupDto): Promise<User> {
+  @Post('/sign-up')
+  signUp(@Body() userSignupDto: UserSignupDto): Promise<UserResponseDto> {
     return this.authService.signUp(userSignupDto);
   }
 
-  @Post('/signin')
+  @Post('/sign-in')
   signIn(
     @Body() authCredentialsDto: AuthCredentialsDto,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<UserResponseDto> {
     return this.authService.signIn(authCredentialsDto);
   }
 
   @Post('/send-reset-password')
-  sendResetPassword(@Body() body: SendResetPasswordDto): Promise<any> {
+  sendResetPassword(
+    @Req() request: Request,
+    @Body() body: SendResetPasswordDto,
+  ): Promise<any> {
     return this.authService.sendResetPassword(body.email);
   }
 
   @Post('/reset-password')
-  resetPassword(@Body() body: ResetPasswordDto): Promise<any> {
+  resetPassword(
+    @Req() request: Request,
+    @Body() body: ResetPasswordDto,
+  ): Promise<any> {
     return this.authService.resetPassword(body);
   }
+
+  @Get('google/login')
+  @UseGuards(GoogleAuthGuard)
+  handleLogin() {
+    return { msg: 'Google Authentication' };
+  }
+
+  // api/auth/google/redirect
+  @Get('google/redirect')
+  @UseGuards(GoogleAuthGuard)
+  handleRedirect() {
+    return { msg: 'OK' };
+  }
+
+  @Get('status')
+  user(@Req() request: Request) {
+    console.log(request.user);
+    if (request.user) {
+      return { msg: 'Authenticated' };
+    } else {
+      return { msg: 'Not Authenticated' };
+    }
+  }
+
+  // ********** GOOGLE AUTH **********
+  // @SetMetadata('google-login', true)
+  // @UseGuards(HttpGoogleOAuthGuard)
+  // @Get()
+  // // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // async googleAuth(@Req() _req: Request) {}
+
+  // @SetMetadata('google-login', true)
+  // @UseGuards(HttpGoogleOAuthGuard)
+  // @Get('google-redirect')
+  // googleAuthRedirect(@HttpUser() user: GoogleLoginUserDto) {
+  //   return this.authService.googleLogin(user);
+  // }
 }

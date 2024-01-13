@@ -3,10 +3,12 @@
 # ------------------------------------------------------
 
 type User {
-  user_id: ID!
+  id: ID!
+  displayName: String
+  name: String
   email: String!
-  password: String!
-  emailVerified: DateTime!
+  password: String
+  emailVerified: DateTime
   createdDate: DateTime!
   updatedDate: DateTime!
   token: String
@@ -19,14 +21,14 @@ scalar DateTime
 
 type Query {
   getAllUsers: [User!]!
-  getUser(id: String!): User!
-  getUserById(id: String!): User!
+  getUserByEmail(email: String!): User!
+  getUserById(id: Float!): User!
 }
 
 type Mutation {
   createUser(createUserDto: UserSignupDto!): User!
   updateUser(updateUserInput: UpdateUserInput!): User!
-  deleteUser(id: String!): User!
+  deleteUser(id: Float!): User!
 }
 
 input UserSignupDto {
@@ -35,7 +37,7 @@ input UserSignupDto {
 }
 
 input UpdateUserInput {
-  user_id: String!
+  id: Float!
   email: String!
   password: String!
 }

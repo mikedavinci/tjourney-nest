@@ -23,14 +23,17 @@ export class UserResolver {
   }
 
   @UseGuards(GqlAuthGuard)
-  @Query(() => User, { name: 'getUser' })
-  findOne(@Args('id') id: string, @CurrentUser() user: any): Promise<User> {
-    return this.userService.findOne(id, user);
+  @Query(() => User, { name: 'getUserByEmail' })
+  findOne(
+    @Args('email') email: string,
+    @CurrentUser() user: any,
+  ): Promise<User> {
+    return this.userService.findOneByEmail(email, user);
   }
 
   @UseGuards(GqlAuthGuard)
   @Query(() => User, { name: 'getUserById' })
-  findOneById(@Args('id') id: string, @CurrentUser() user: any): Promise<User> {
+  findOneById(@Args('id') id: number, @CurrentUser() user: any): Promise<User> {
     return this.userService.findOne(id, user);
   }
 
@@ -40,16 +43,12 @@ export class UserResolver {
     @Args('updateUserInput') updateUserInput: UpdateUserInput,
     @CurrentUser() user: any,
   ) {
-    return this.userService.update(
-      updateUserInput.user_id,
-      updateUserInput,
-      user,
-    );
+    return this.userService.update(updateUserInput.id, updateUserInput, user);
   }
 
   @UseGuards(GqlAuthGuard)
   @Mutation(() => User, { name: 'deleteUser' })
-  removeUser(@Args('id') id: string, @CurrentUser() user: any) {
+  removeUser(@Args('id') id: number, @CurrentUser() user: any) {
     return this.userService.remove(id, user);
   }
 }

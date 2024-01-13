@@ -4,7 +4,7 @@ import { IsEmail, IsString, MinLength, MaxLength } from 'class-validator';
 @InputType()
 export class UpdateUserInput {
   @Field()
-  user_id: string;
+  id: number;
 
   @Field()
   @IsEmail()

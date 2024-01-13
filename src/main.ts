@@ -1,14 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-
 import * as cookieParser from 'cookie-parser';
-import { AllExceptionsFilter } from './common/filters';
 import { ValidationPipe } from '@nestjs/common';
+import { AllExceptionsFilter } from './common/filters';
+// import * as passport from 'passport';
+// import * as session from 'express-session';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
-  // app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new AllExceptionsFilter());
   app.use(cookieParser());
@@ -20,6 +21,18 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
-  await app.listen(process.env.PROD_URL || 8001);
+  // app.use(
+  //   session({
+  //     secret: process.env.SESSION_SECRET,
+  //     saveUninitialized: false,
+  //     resave: false,
+  //     cookie: {
+  //       maxAge: 60000,
+  //     },
+  //   }),
+  // );
+  // app.use(passport.initialize());
+  // app.use(passport.session());
+  await app.listen(8001);
 }
 bootstrap();

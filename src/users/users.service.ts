@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -11,6 +12,7 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { UpdateUserInput } from './dto/update-user.input';
 import { HttpService } from '@nestjs/axios';
+import { UserResponseDto } from './dto/user-response.dto';
 
 @Injectable()
 export class UserService {
@@ -21,8 +23,8 @@ export class UserService {
     private httpService: HttpService,
   ) {}
 
-  checkUserPermission(user_id: string, currentUser: any) {
-    if (currentUser && user_id != currentUser.userId) {
+  checkUserPermission(id: number, currentUser: any) {
+    if (currentUser && id != currentUser.userId) {
       throw new UnauthorizedException(
         'You do not have permission to access this user!',
       );
@@ -37,19 +39,47 @@ export class UserService {
     }
   }
 
-  async create(createUserDto: UserSignupDto): Promise<User> {
-    const saltOrRounds = Number(
-      this.configService.get('SALT_ROUNDS') || process.env.SALT_ROUNDS,
-    );
+  async create(createUserDto: UserSignupDto): Promise<UserResponseDto> {
+    try {
+      // Check if the user already exists
+      const existingUser = await this.userRepository.findOne({
+        where: {
+          email: createUserDto.email,
+        },
+      });
 
-    createUserDto.password = await bcrypt.hash(
-      createUserDto.password,
-      saltOrRounds,
-    );
-    const user = this.userRepository.create(createUserDto);
-    const newUser = await this.userRepository.save(user);
-    // this.sendSMSVerificationCode(newUser.user_id);
-    return newUser;
+      if (existingUser) {
+        throw new ConflictException('User already exists');
+      }
+
+      // If user does not exist, proceed with creation
+      const saltOrRounds = Number(
+        this.configService.get('SALT_ROUNDS') || process.env.SALT_ROUNDS,
+      );
+
+      createUserDto.password = await bcrypt.hash(
+        createUserDto.password,
+        saltOrRounds,
+      );
+
+      const user = this.userRepository.create(createUserDto);
+      const newUser = await this.userRepository.save(user);
+
+      const userResponse = new UserResponseDto();
+      userResponse.id = newUser.id;
+      userResponse.email = newUser.email;
+      userResponse.displayName = newUser.displayName;
+      userResponse.name = newUser.name;
+      userResponse.emailVerified = newUser.emailVerified;
+
+      return userResponse;
+
+      // this.sendSMSVerificationCode(newUser.user_id);
+    } catch (error) {
+      // Rethrow the error to be handled by NestJS's global exception filter
+      // or a controller-level exception filter.
+      throw error;
+    }
   }
 
   async findAll(): Promise<User[]> {
@@ -67,23 +97,23 @@ export class UserService {
     });
   }
 
-  async findOne(user_id: string, currentUser: any = null): Promise<User> {
-    this.checkUserPermission(user_id, currentUser);
+  async findOne(id: number, currentUser: any = null): Promise<User> {
+    this.checkUserPermission(id, currentUser);
 
     return this.userRepository.findOne({
       where: {
-        user_id,
+        id,
       },
       relations: [],
     });
   }
 
-  async findOneById(user_id: string, currentUser: any = null): Promise<User> {
-    this.checkUserPermission(user_id, currentUser);
+  async findOneById(id: number, currentUser: any = null): Promise<User> {
+    this.checkUserPermission(id, currentUser);
 
     return this.userRepository.findOne({
       where: {
-        user_id,
+        id,
       },
     });
   }
@@ -122,7 +152,7 @@ export class UserService {
   }
 
   async update(
-    id: string,
+    id: number,
     updateUserInput: UpdateUserInput,
     currentUser: any = null,
   ) {
@@ -140,11 +170,11 @@ export class UserService {
     }
 
     const user: User = this.userRepository.create(updateUserInput);
-    user.user_id = id;
+    user.id = id;
     return this.userRepository.save(user);
   }
 
-  async remove(id: string, currentUser: any = null): Promise<void> {
+  async remove(id: number, currentUser: any = null): Promise<void> {
     this.checkUserPermission(id, currentUser);
     const result = await this.userRepository.delete(id);
 
