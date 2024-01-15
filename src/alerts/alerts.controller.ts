@@ -10,7 +10,7 @@ import { FilterAlertDto } from './dto/filter-alert.dto';
 export class AlertController {
   constructor(private readonly alertService: AlertService) {}
 
-  @Post()
+  @Post('create-alert')
   @ApiOperation({ summary: 'Create a new alert' })
   @ApiResponse({
     status: 201,
