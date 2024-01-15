@@ -19,7 +19,7 @@ export class AlertController {
   })
   @ApiBody({ type: CreateAlertDto })
   async createAlert(
-    @Body(ValidationPipe) createAlertDto: string,
+    @Body(ValidationPipe) createAlertDto: CreateAlertDto,
   ): Promise<Alert> {
     return await this.alertService.saveAlertData(createAlertDto);
   }

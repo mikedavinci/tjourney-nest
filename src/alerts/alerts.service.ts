@@ -12,10 +12,18 @@ export class AlertService {
     private alertRepository: Repository<Alert>,
   ) {}
 
-  async saveAlertData(createAlertDto: string): Promise<Alert> {
+  // async saveAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
+  //   const alert = this.alertRepository.create({
+  //     alert_data: createAlertDto,
+  //   });
+
+  //   return await this.alertRepository.save(alert);
+  // }
+
+  // Assuming CreateAlertDto is structured correctly to match your JSON data
+  async saveAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
     // Convert CreateAlertDto to a JSON string
-    const alertDataString = createAlertDto.replace(/\\"/g, '"');
-    // const cleanedJsonString = createAlertDto.replace(/\\"/g, '"');
+    const alertDataString = JSON.stringify(createAlertDto);
 
     // Parse the JSON string back to an object (if needed)
     let parsedData: CreateAlertDto;
