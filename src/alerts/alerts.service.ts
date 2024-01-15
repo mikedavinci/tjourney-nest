@@ -12,11 +12,33 @@ export class AlertService {
     private alertRepository: Repository<Alert>,
   ) {}
 
+  // async saveAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
+  //   const alert = this.alertRepository.create({
+  //     alert_data: createAlertDto,
+  //   });
+
+  //   return await this.alertRepository.save(alert);
+  // }
+
+  // Assuming CreateAlertDto is structured correctly to match your JSON data
   async saveAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
+    // Convert CreateAlertDto to a JSON string
+    const alertDataString = JSON.stringify(createAlertDto);
+
+    // Parse the JSON string back to an object (if needed)
+    let parsedData: CreateAlertDto;
+    try {
+      parsedData = JSON.parse(alertDataString);
+    } catch (error) {
+      throw new Error('Invalid JSON format');
+    }
+
+    // Create a new alert with the parsed data
     const alert = this.alertRepository.create({
-      alert_data: createAlertDto,
+      alert_data: parsedData,
     });
 
+    // Save the alert in the database
     return await this.alertRepository.save(alert);
   }
 
