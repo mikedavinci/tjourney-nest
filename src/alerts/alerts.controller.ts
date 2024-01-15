@@ -21,7 +21,7 @@ export class AlertController {
   async createAlert(
     @Body(ValidationPipe) createAlertDto: CreateAlertDto,
   ): Promise<Alert> {
-    return await this.alertService.saveAlertData(createAlertDto.alertData);
+    return await this.alertService.saveAlertData(createAlertDto);
   }
 
   @Get()

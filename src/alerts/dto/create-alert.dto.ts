@@ -25,28 +25,26 @@ class OhlcvDto {
   volume: number;
 }
 
-class AlertDataDto {
+export class CreateAlertDto {
+  @IsNotEmpty()
   @IsString()
   alert: string;
 
+  @IsNotEmpty()
   @IsString()
   ticker: string;
 
+  @IsNotEmpty()
   @IsString()
   tf: string;
 
+  @IsNotEmpty()
   @IsObject()
   @ValidateNested()
   @Type(() => OhlcvDto)
   ohlcv: OhlcvDto;
 
+  @IsNotEmpty()
   @IsNumber()
   bartime: number;
-}
-
-export class CreateAlertDto {
-  @IsNotEmpty()
-  @ValidateNested()
-  @Type(() => AlertDataDto)
-  alertData: AlertDataDto;
 }
