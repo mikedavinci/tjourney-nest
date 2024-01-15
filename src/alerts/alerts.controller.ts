@@ -6,7 +6,7 @@ import { Alert } from './entities/alerts.entity';
 import { FilterAlertDto } from './dto/filter-alert.dto';
 
 @ApiTags('Alerts')
-@Controller('alert')
+@Controller('alerts')
 export class AlertController {
   constructor(private readonly alertService: AlertService) {}
 
@@ -21,8 +21,7 @@ export class AlertController {
   async createAlert(
     @Body(ValidationPipe) createAlertDto: CreateAlertDto,
   ): Promise<Alert> {
-    const alertData = createAlertDto.alertData || '';
-    return await this.alertService.saveAlertData(alertData);
+    return await this.alertService.saveAlertData(createAlertDto.alertData);
   }
 
   @Get()

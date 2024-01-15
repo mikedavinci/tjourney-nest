@@ -21,18 +21,6 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
-  // app.use(
-  //   session({
-  //     secret: process.env.SESSION_SECRET,
-  //     saveUninitialized: false,
-  //     resave: false,
-  //     cookie: {
-  //       maxAge: 60000,
-  //     },
-  //   }),
-  // );
-  // app.use(passport.initialize());
-  // app.use(passport.session());
   await app.listen(8001);
 }
 bootstrap();

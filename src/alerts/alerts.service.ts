@@ -2,7 +2,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Alert } from './entities/alerts.entity';
+import { Alert, AlertData } from './entities/alerts.entity';
+
 @Injectable()
 export class AlertService {
   constructor(
@@ -10,13 +11,17 @@ export class AlertService {
     private alertRepository: Repository<Alert>,
   ) {}
 
-  async saveAlertData(alertData: Record<string, any> | string): Promise<Alert> {
+  async saveAlertData(alertData: AlertData | string): Promise<Alert> {
     const alert = this.alertRepository.create();
 
     if (typeof alertData === 'string') {
-      alert.alert_data = alertData;
+      try {
+        alert.alert_data = JSON.parse(alertData) as AlertData;
+      } catch (e) {
+        throw new Error('Invalid JSON string');
+      }
     } else {
-      alert.alert_data = JSON.stringify(alertData);
+      alert.alert_data = alertData;
     }
 
     return await this.alertRepository.save(alert);

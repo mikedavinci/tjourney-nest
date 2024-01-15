@@ -31,24 +31,8 @@ import { RefreshJwtStrategy } from './strategies/refresh-token.strategy';
     UsersModule,
     MailModule,
   ],
-  providers: [
-    AuthService,
-    JwtStrategy,
-    GoogleStrategy,
-    LocalStrategy,
-    RefreshJwtStrategy,
-    {
-      provide: 'AUTH_SERVICE',
-      useClass: AuthService,
-    },
-  ],
+  providers: [AuthService, JwtStrategy, LocalStrategy, RefreshJwtStrategy],
   controllers: [AuthController],
-  exports: [
-    JwtStrategy,
-    GoogleStrategy,
-    RefreshJwtStrategy,
-    LocalStrategy,
-    PassportModule,
-  ],
+  exports: [JwtStrategy, RefreshJwtStrategy, LocalStrategy, PassportModule],
 })
 export class AuthModule {}
