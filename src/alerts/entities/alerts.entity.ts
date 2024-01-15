@@ -22,7 +22,7 @@ export interface AlertData {
 
 @Entity()
 export class Alert {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: number | undefined;
 
   @Column('jsonb', { nullable: false, default: {} })

@@ -1,5 +1,13 @@
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Controller, Post, Body, ValidationPipe, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  ValidationPipe,
+  Get,
+  Param,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { AlertService } from './alerts.service';
 import { CreateAlertDto } from './dto/create-alert.dto';
 import { Alert } from './entities/alerts.entity';
@@ -29,6 +37,13 @@ export class AlertController {
   @ApiResponse({ status: 200, type: [Alert] })
   async getAllAlerts(): Promise<Alert[]> {
     return await this.alertService.getAllAlerts();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get an Alert by ID' })
+  @ApiResponse({ status: 200, type: Alert })
+  async getAlertById(@Param('id', ParseIntPipe) id: number): Promise<Alert> {
+    return await this.alertService.getAlertById(id);
   }
 
   @Post('/filter')

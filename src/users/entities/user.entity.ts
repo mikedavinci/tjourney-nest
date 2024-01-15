@@ -13,7 +13,7 @@ import {
 export class User {
   // Field of type ID is required for GraphQL
   @Field(() => ID)
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: number;
 
   @Field({ nullable: true })

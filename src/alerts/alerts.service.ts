@@ -37,6 +37,10 @@ export class AlertService {
     return await this.alertRepository.find();
   }
 
+  async getAlertById(id: number): Promise<Alert> {
+    return await this.alertRepository.findOne({ where: { id } });
+  }
+
   async getFilteredAlerts(bullOrBear: string, tf: string): Promise<Alert[]> {
     // Use TypeORM's query builder for efficient filtering
     const qb = this.alertRepository
