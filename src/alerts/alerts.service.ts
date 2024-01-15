@@ -12,15 +12,6 @@ export class AlertService {
     private alertRepository: Repository<Alert>,
   ) {}
 
-  // async saveAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
-  //   const alert = this.alertRepository.create({
-  //     alert_data: createAlertDto,
-  //   });
-
-  //   return await this.alertRepository.save(alert);
-  // }
-
-  // Assuming CreateAlertDto is structured correctly to match your JSON data
   async saveAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
     // Convert CreateAlertDto to a JSON string
     const alertDataString = JSON.stringify(createAlertDto);
