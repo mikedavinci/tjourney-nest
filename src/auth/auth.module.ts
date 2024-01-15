@@ -8,7 +8,6 @@ import { MailModule } from 'src/mail/mail.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { User } from 'src/users/entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { GoogleStrategy } from './strategies/google.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategies/local-strategy';
 import { RefreshJwtStrategy } from './strategies/refresh-token.strategy';
