@@ -17,7 +17,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserDetails } from 'src/users/utils/types';
 import { UserResponseDto } from 'src/users/dto/user-response.dto';
-
+import { addMinutes } from 'date-fns';
 @Injectable()
 export class AuthService {
   constructor(
@@ -59,7 +59,26 @@ export class AuthService {
         email,
         sub: user.id,
       };
-      const accessToken: string = this.jwtService.sign(payload);
+
+      // access token
+      const accessTokenExpirationMinutes = 60;
+      const accessToken: string = this.jwtService.sign(payload, {
+        expiresIn: accessTokenExpirationMinutes,
+      });
+      const accessTokenExpiresAt = addMinutes(
+        new Date(),
+        accessTokenExpirationMinutes / 60,
+      );
+
+      // refresh token
+      const refreshTokenExpirationMinutes = 120;
+      const refreshToken: string = this.jwtService.sign(payload, {
+        expiresIn: refreshTokenExpirationMinutes,
+      });
+      const refreshTokenExpiresAt = addMinutes(
+        new Date(),
+        refreshTokenExpirationMinutes / 60,
+      );
 
       const userResponse = new UserResponseDto();
       userResponse.id = user.id;
@@ -71,23 +90,45 @@ export class AuthService {
       return {
         ...userResponse,
         access_token: accessToken,
-        refresh_token: this.jwtService.sign(payload, { expiresIn: '7d' }),
+        access_token_expires_at: accessTokenExpiresAt.toISOString(),
+        refresh_token: refreshToken,
+        refresh_token_expires_at: refreshTokenExpiresAt.toISOString(),
       };
     } else {
       throw new UnauthorizedException('Please check your login credentials');
     }
   }
 
-  async refreshToken(user: User): Promise<any> {
-    const payload: JwtPayload = {
-      email: user.email,
-      sub: user.id,
-    };
-    const accessToken: string = this.jwtService.sign(payload);
+  async refreshToken(refreshToken: string): Promise<any> {
+    try {
+      // Verify and decode the refresh token
+      const decoded = this.jwtService.verify<JwtPayload>(refreshToken, {
+        secret: this.configService.get('JWT_SECRET'), // use your refresh token secret
+      });
 
-    return {
-      access_token: accessToken,
-    };
+      // Check if the token has the necessary payload
+      if (!decoded || !decoded.email || !decoded.sub) {
+        throw new Error('Invalid token payload');
+      }
+
+      // Payload is valid, create a new access token
+      const payload: JwtPayload = {
+        email: decoded.email,
+        sub: decoded.sub,
+      };
+      const accessToken: string = this.jwtService.sign(payload, {
+        secret: this.configService.get('JWT_SECRET'), // use your access token secret
+        expiresIn: '2m', // set your desired expiration time for access token
+      });
+
+      return {
+        access_token: accessToken,
+      };
+    } catch (error) {
+      // Handle the error when the refresh token is expired or invalid
+      console.error(error.message);
+      return null; // or return { access_token: null };
+    }
   }
 
   async sendResetPassword(email: string) {

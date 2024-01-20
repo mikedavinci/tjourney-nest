@@ -22,9 +22,9 @@ import { RefreshJwtStrategy } from './strategies/refresh-token.strategy';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET') || process.env.JWT_SECRET,
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRATION_TIME'),
-        },
+        // signOptions: {
+        //   expiresIn: configService.get('JWT_EXPIRATION_TIME'),
+        // },
       }),
     }),
     UsersModule,
