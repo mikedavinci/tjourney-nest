@@ -89,10 +89,10 @@ export class AuthService {
 
       return {
         ...userResponse,
-        access_token: accessToken,
-        access_token_expires_at: accessTokenExpiresAt.toISOString(),
-        refresh_token: refreshToken,
-        refresh_token_expires_at: refreshTokenExpiresAt.toISOString(),
+        accessToken: accessToken,
+        accessTokenExpiresAt: accessTokenExpiresAt.toISOString(),
+        refreshToken: refreshToken,
+        refreshTokenExpiresAt: refreshTokenExpiresAt.toISOString(),
       };
     } else {
       throw new UnauthorizedException('Please check your login credentials');
