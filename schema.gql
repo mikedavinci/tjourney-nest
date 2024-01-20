@@ -9,6 +9,7 @@ type User {
   email: String!
   password: String
   emailVerified: DateTime
+  verificationCode: String
   createdDate: DateTime!
   updatedDate: DateTime!
   token: String

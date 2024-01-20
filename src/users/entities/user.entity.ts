@@ -36,6 +36,10 @@ export class User {
   @Column({ nullable: true })
   emailVerified: Date;
 
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  verificationCode: string;
+
   @Field()
   @CreateDateColumn({ type: 'timestamptz' })
   createdDate: Date;
