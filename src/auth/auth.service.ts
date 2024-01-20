@@ -61,7 +61,7 @@ export class AuthService {
       };
 
       // access token
-      const accessTokenExpirationMinutes = 60;
+      const accessTokenExpirationMinutes = 28800; // 8 hours
       const accessToken: string = this.jwtService.sign(payload, {
         expiresIn: accessTokenExpirationMinutes,
       });
@@ -71,7 +71,7 @@ export class AuthService {
       );
 
       // refresh token
-      const refreshTokenExpirationMinutes = 120;
+      const refreshTokenExpirationMinutes = 86400; // 24 hours
       const refreshToken: string = this.jwtService.sign(payload, {
         expiresIn: refreshTokenExpirationMinutes,
       });
