@@ -39,7 +39,7 @@ export class UserService {
     }
   }
 
-  async create(createUserDto: UserSignupDto): Promise<UserResponseDto> {
+  async create(createUserDto: UserSignupDto): Promise<User> {
     try {
       // Check if the user already exists
       const existingUser = await this.userRepository.findOne({
@@ -72,7 +72,7 @@ export class UserService {
       userResponse.name = newUser.name;
       userResponse.emailVerified = newUser.emailVerified;
 
-      return userResponse;
+      return newUser;
 
       // this.sendSMSVerificationCode(newUser.user_id);
     } catch (error) {

@@ -8,11 +8,12 @@ type User {
   name: String
   email: String!
   password: String
-  emailVerified: DateTime
-  verificationCode: String
+  emailVerified: Boolean!
+  token: String
+  resetToken: String
+  resetTokenExpiry: DateTime
   createdDate: DateTime!
   updatedDate: DateTime!
-  token: String
 }
 
 """

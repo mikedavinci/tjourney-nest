@@ -1,4 +1,4 @@
-import { Field, ObjectType, GraphQLISODateTime, ID } from '@nestjs/graphql';
+import { Field, ObjectType, ID } from '@nestjs/graphql';
 import {
   Column,
   CreateDateColumn,
@@ -32,13 +32,25 @@ export class User {
   @Column({ nullable: true })
   password: string;
 
-  @Field(() => GraphQLISODateTime, { nullable: true })
-  @Column({ nullable: true })
-  emailVerified: Date;
+  @Field()
+  @Column({ default: false })
+  emailVerified: boolean;
 
   @Field({ nullable: true })
   @Column({ nullable: true })
-  verificationCode: string;
+  token: string;
+
+  // @Field({ nullable: true })
+  // @Column({ nullable: true })
+  // tokenExpiry: Date;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  resetToken: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  resetTokenExpiry: Date;
 
   @Field()
   @CreateDateColumn({ type: 'timestamptz' })
@@ -47,8 +59,4 @@ export class User {
   @Field()
   @UpdateDateColumn({ type: 'timestamptz', nullable: true })
   updatedDate: Date;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  token: string;
 }

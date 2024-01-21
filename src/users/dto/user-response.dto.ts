@@ -15,5 +15,5 @@ export class UserResponseDto {
   name: string;
 
   @IsString()
-  emailVerified: Date;
+  emailVerified: boolean;
 }

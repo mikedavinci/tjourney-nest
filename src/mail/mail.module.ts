@@ -8,10 +8,13 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 @Module({
   imports: [
     MailerModule.forRootAsync({
-      imports: [ConfigModule], // import module if not enabled globally
+      imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
-        // transport: config.get("MAIL_TRANSPORT"),
-        // or
+        // Log the directory path
+        // const templatesDir = join(__dirname, 'templates');
+        // console.log('Mail templates directory:', templatesDir);
+
+        // return {
         transport: {
           host: config.get('MAIL_HOST'),
           secure: false,
@@ -21,7 +24,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
           },
         },
         defaults: {
-          from: `"No Reply" <${config.get('MAIL_FROM')}>`,
+          from: `"TradeJourney" <${config.get('MAIL_FROM')}>`,
         },
         template: {
           dir: join(__dirname, 'templates'),
@@ -30,6 +33,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
             strict: true,
           },
         },
+        // };
       }),
       inject: [ConfigService],
     }),

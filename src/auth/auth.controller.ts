@@ -26,6 +26,13 @@ export class AuthController {
     return this.authService.signIn(authCredentialsDto);
   }
 
+  @Post('/verify-email')
+  async verifyEmail(
+    @Body() body: { email: string; token: string },
+  ): Promise<any> {
+    return this.authService.verifyEmail(body.email, body.token);
+  }
+
   @UseGuards(RefreshJwtAuthGuard)
   @Post('/refresh-token')
   refreshToken(@Req() request: Request): Promise<any> {
@@ -33,18 +40,12 @@ export class AuthController {
   }
 
   @Post('/send-reset-password')
-  sendResetPassword(
-    @Req() request: Request,
-    @Body() body: SendResetPasswordDto,
-  ): Promise<any> {
+  sendResetPassword(@Body() body: SendResetPasswordDto): Promise<any> {
     return this.authService.sendResetPassword(body.email);
   }
 
   @Post('/reset-password')
-  resetPassword(
-    @Req() request: Request,
-    @Body() body: ResetPasswordDto,
-  ): Promise<any> {
+  resetPassword(@Body() body: ResetPasswordDto): Promise<any> {
     return this.authService.resetPassword(body);
   }
 

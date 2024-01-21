@@ -7,7 +7,10 @@ export class ResetPasswordDto {
   email: string;
 
   @IsString()
-  token: string;
+  resetToken: string;
+
+  // @IsDate()
+  // resetTokenExpiry: Date;
 
   @Field()
   @IsString()

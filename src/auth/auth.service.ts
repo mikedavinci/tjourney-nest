@@ -29,8 +29,75 @@ export class AuthService {
   ) {}
 
   async signUp(createUserDto: UserSignupDto): Promise<UserResponseDto> {
-    const newUser = await this.userService.create(createUserDto);
-    return newUser;
+    try {
+      const user = await this.userService.create(createUserDto);
+
+      // Send email verification
+      await this.sendEmailVerification(user);
+
+      // Convert User entity to UserResponseDto
+      const userResponse = new UserResponseDto();
+      userResponse.id = user.id;
+      userResponse.email = user.email;
+      userResponse.displayName = user.displayName;
+      userResponse.name = user.name;
+      userResponse.emailVerified = user.emailVerified;
+
+      return userResponse;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // TODO: SET A THROTTLE FOR THIS METHOD, MAXIMUM 2 EMAIL PER 60 MINUTES
+  async sendEmailVerification(user: User): Promise<{ message: string }> {
+    // Check if the user's email is already verified
+    if (user.emailVerified) {
+      return { message: 'Email is already verified.' };
+    }
+
+    try {
+      const token = Math.floor(100000 + Math.random() * 900000).toString();
+      user.token = token;
+      await this.userRepository.save(user);
+
+      await this.mailService.sendVerificationEmail(user, token);
+      return { message: 'Verification email sent.' };
+    } catch (error) {
+      console.error(error);
+      return {
+        message: 'Failed to send verification email. Please try again later.',
+      };
+    }
+  }
+
+  async verifyEmail(email: string, token: string): Promise<any> {
+    try {
+      const user = await this.userRepository.findOne({ where: { email } });
+
+      if (!user) {
+        throw new NotFoundException('Invalid email');
+      }
+
+      // Check if the user's email is already verified
+      if (user.emailVerified) {
+        return { message: 'Email is already verified.' };
+      }
+
+      if (user.token !== token) {
+        throw new NotFoundException('Invalid token, contact support for help.');
+      }
+
+      user.emailVerified = true;
+      user.token = null;
+      await this.userRepository.save(user);
+      return { message: 'Email verified successfully!', emailVerified: true };
+    } catch (error) {
+      console.log(error);
+      return {
+        message: 'Failed to verify email. Please try again.',
+      };
+    }
   }
 
   async validateUser(authCredentialsDto: AuthCredentialsDto): Promise<any> {
@@ -52,6 +119,15 @@ export class AuthService {
 
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+
+    // Check if email is verified
+    if (!user.emailVerified) {
+      // Resend email verification
+      await this.sendEmailVerification(user);
+      throw new UnauthorizedException(
+        'Email not verified. Please check your inbox for the verification email.',
+      );
     }
 
     if (user && (await bcrypt.compare(password, user.password))) {
@@ -122,7 +198,7 @@ export class AuthService {
       });
 
       return {
-        access_token: accessToken,
+        accessToken: accessToken,
       };
     } catch (error) {
       // Handle the error when the refresh token is expired or invalid
@@ -134,36 +210,69 @@ export class AuthService {
   async sendResetPassword(email: string) {
     const user = await this.userService.findOneByEmail(email);
 
+    // Return a generic message if user not found
     if (!user) {
-      throw new NotFoundException('User not found');
+      return {
+        message:
+          'If an account with that email exists, a password reset link will be sent',
+      };
     }
 
-    user.token = Math.floor(100000 + Math.random() * 900000) + '';
-    const newUser = await this.userService.saveEntity(user);
-    const emailStatus = await this.mailService.sendResetPassword(
-      newUser,
-      user.token,
-    );
+    // Check if an unexpired token already exists
+    if (user.resetToken && new Date(user.resetTokenExpiry) > new Date()) {
+      // Resend the existing unexpired token
+      try {
+        await this.mailService.sendResetPassword(user, user.resetToken);
+      } catch (error) {
+        console.error('Failed to resend Reset Password email:', error);
+      }
+      return { message: 'Reset Password email resent successfully' };
+    }
 
-    return emailStatus;
+    user.resetToken = Math.floor(100000 + Math.random() * 900000) + '';
+    user.resetTokenExpiry = new Date(Date.now() + 3600000); // expires in 1 hour
+    await this.userService.saveEntity(user);
+
+    try {
+      await this.mailService.sendResetPassword(user, user.resetToken);
+    } catch (error) {
+      // Log the error internally, but don't change the response to the user
+      console.error('Failed to send Reset Password email:', error);
+    }
+
+    // Return a success message
+    return { message: 'Reset Password email sent successfully' };
   }
 
   async resetPassword(dto: ResetPasswordDto) {
     const user = await this.userService.findOneByEmail(dto.email);
-    if (!user || user.token !== dto.token) {
-      throw new NotFoundException('User not found');
+    // Check for user existence and token validity
+    if (
+      !user ||
+      user.resetToken !== dto.resetToken ||
+      new Date() > new Date(user.resetTokenExpiry)
+    ) {
+      return { message: 'Invalid or expired token' };
     }
 
     const saltOrRounds = Number(
       this.configService.get('SALT_ROUNDS') || process.env.SALT_ROUNDS,
     );
-
-    user.token = null;
     user.password = await bcrypt.hash(dto.password, saltOrRounds);
+    user.resetToken = null;
+    user.resetTokenExpiry = null;
 
-    const newUser = await this.userService.saveEntity(user);
+    await this.userService.saveEntity(user);
 
-    return newUser;
+    try {
+      await this.mailService.sendPasswordResetConfirmation(user);
+    } catch (error) {
+      // Log the error internally, but don't change the response to the user
+      console.error('Failed to send password reset confirmation email:', error);
+    }
+
+    // Return a success message
+    return { message: 'Password reset successfully' };
   }
 
   async validateGoogleUser(details: UserDetails) {
