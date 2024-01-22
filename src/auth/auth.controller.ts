@@ -15,7 +15,9 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('/sign-up')
-  signUp(@Body() userSignupDto: UserSignupDto): Promise<UserResponseDto> {
+  signUp(
+    @Body() userSignupDto: UserSignupDto,
+  ): Promise<{ statusCode: number; message: string; data?: UserResponseDto }> {
     return this.authService.signUp(userSignupDto);
   }
 
@@ -24,6 +26,11 @@ export class AuthController {
     @Body() authCredentialsDto: AuthCredentialsDto,
   ): Promise<UserResponseDto> {
     return this.authService.signIn(authCredentialsDto);
+  }
+
+  @Post('/send-verification-email')
+  async sendVerificationEmail(@Body() body: { email: string }): Promise<any> {
+    return this.authService.sendEmailVerification(body.email);
   }
 
   @Post('/verify-email')

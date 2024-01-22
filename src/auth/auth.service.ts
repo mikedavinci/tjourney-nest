@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -28,12 +24,14 @@ export class AuthService {
     private mailService: MailService,
   ) {}
 
-  async signUp(createUserDto: UserSignupDto): Promise<UserResponseDto> {
+  async signUp(
+    createUserDto: UserSignupDto,
+  ): Promise<{ statusCode: number; message: string; data?: UserResponseDto }> {
     try {
       const user = await this.userService.create(createUserDto);
 
       // Send email verification
-      await this.sendEmailVerification(user);
+      await this.sendEmailVerification(user.email);
 
       // Convert User entity to UserResponseDto
       const userResponse = new UserResponseDto();
@@ -43,17 +41,36 @@ export class AuthService {
       userResponse.name = user.name;
       userResponse.emailVerified = user.emailVerified;
 
-      return userResponse;
+      return {
+        statusCode: 201, // 201 for created
+        message:
+          'User created successfully. Check your email for a verification link.',
+        data: userResponse,
+      };
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      return {
+        statusCode: 500, // Internal Server Error
+        message: 'Failed to create user. Please try again.',
+      };
     }
   }
 
   // TODO: SET A THROTTLE FOR THIS METHOD, MAXIMUM 2 EMAIL PER 60 MINUTES
-  async sendEmailVerification(user: User): Promise<{ message: string }> {
-    // Check if the user's email is already verified
+  async sendEmailVerification(
+    email: string,
+  ): Promise<{ statusCode: number; message: string }> {
+    const user = await this.userRepository.findOne({ where: { email } });
+
+    if (!user) {
+      return {
+        statusCode: 404,
+        message: 'Something is wrong with the email you provided.',
+      }; // Not Found
+    }
+
     if (user.emailVerified) {
-      return { message: 'Email is already verified.' };
+      return { statusCode: 400, message: 'Email is already verified.' };
     }
 
     try {
@@ -62,41 +79,51 @@ export class AuthService {
       await this.userRepository.save(user);
 
       await this.mailService.sendVerificationEmail(user, token);
-      return { message: 'Verification email sent.' };
+      return { statusCode: 200, message: 'Verification email sent.' };
     } catch (error) {
       console.error(error);
       return {
+        statusCode: 500,
         message: 'Failed to send verification email. Please try again later.',
       };
     }
   }
 
-  async verifyEmail(email: string, token: string): Promise<any> {
+  async verifyEmail(
+    email: string,
+    token: string,
+  ): Promise<{ message: string; statusCode: number }> {
     try {
       const user = await this.userRepository.findOne({ where: { email } });
 
       if (!user) {
-        throw new NotFoundException('Invalid email');
+        return {
+          message: 'Something is wrong the email you provided.',
+          statusCode: 404,
+        }; // Not Found
       }
 
-      // Check if the user's email is already verified
       if (user.emailVerified) {
-        return { message: 'Email is already verified.' };
+        return { message: 'Email is already verified.', statusCode: 200 }; // OK
       }
 
       if (user.token !== token) {
-        throw new NotFoundException('Invalid token, contact support for help.');
+        return {
+          message: 'Invalid token, try again or Resend Verification Code.',
+          statusCode: 400,
+        }; // Bad Request
       }
 
       user.emailVerified = true;
       user.token = null;
       await this.userRepository.save(user);
-      return { message: 'Email verified successfully!', emailVerified: true };
+      return { message: 'Email verified successfully!', statusCode: 200 }; // OK
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return {
         message: 'Failed to verify email. Please try again.',
-      };
+        statusCode: 500,
+      }; // Internal Server Error
     }
   }
 
@@ -118,16 +145,17 @@ export class AuthService {
     const user = await this.userService.findOneByEmail(email);
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      return { statusCode: 404, message: 'User not found' };
     }
 
     // Check if email is verified
     if (!user.emailVerified) {
-      // Resend email verification
-      await this.sendEmailVerification(user);
-      throw new UnauthorizedException(
-        'Email not verified. Please check your inbox for the verification email.',
-      );
+      await this.sendEmailVerification(email);
+      return {
+        statusCode: 401,
+        message:
+          'Email not verified. Please check your inbox for the verification email.',
+      };
     }
 
     if (user && (await bcrypt.compare(password, user.password))) {
@@ -164,14 +192,21 @@ export class AuthService {
       userResponse.emailVerified = user.emailVerified;
 
       return {
-        ...userResponse,
-        accessToken: accessToken,
-        accessTokenExpiresAt: accessTokenExpiresAt.toISOString(),
-        refreshToken: refreshToken,
-        refreshTokenExpiresAt: refreshTokenExpiresAt.toISOString(),
+        statusCode: 200,
+        message: 'Login successful',
+        data: {
+          ...userResponse,
+          accessToken: accessToken,
+          accessTokenExpiresAt: accessTokenExpiresAt.toISOString(),
+          refreshToken: refreshToken,
+          refreshTokenExpiresAt: refreshTokenExpiresAt.toISOString(),
+        },
       };
     } else {
-      throw new UnauthorizedException('Please check your login credentials');
+      return {
+        statusCode: 401,
+        message: 'Please check your login credentials',
+      };
     }
   }
 
@@ -194,7 +229,7 @@ export class AuthService {
       };
       const accessToken: string = this.jwtService.sign(payload, {
         secret: this.configService.get('JWT_SECRET'), // use your access token secret
-        expiresIn: '2m', // set your desired expiration time for access token
+        expiresIn: 28800, // 8 hours
       });
 
       return {
@@ -207,7 +242,9 @@ export class AuthService {
     }
   }
 
-  async sendResetPassword(email: string) {
+  async sendResetPassword(
+    email: string,
+  ): Promise<{ message: string; statusCode: number }> {
     const user = await this.userService.findOneByEmail(email);
 
     // Return a generic message if user not found
@@ -215,6 +252,7 @@ export class AuthService {
       return {
         message:
           'If an account with that email exists, a password reset link will be sent',
+        statusCode: 200, // OK, or consider using 404 if you prefer to indicate user not found
       };
     }
 
@@ -225,34 +263,55 @@ export class AuthService {
         await this.mailService.sendResetPassword(user, user.resetToken);
       } catch (error) {
         console.error('Failed to resend Reset Password email:', error);
+        return {
+          message: 'Failed to resend Reset Password email',
+          statusCode: 500,
+        }; // Internal Server Error
       }
-      return { message: 'Reset Password email resent successfully' };
+      return {
+        message: 'Reset Password email resent successfully',
+        statusCode: 200,
+      }; // OK
     }
 
-    user.resetToken = Math.floor(100000 + Math.random() * 900000) + '';
+    user.resetToken = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetTokenExpiry = new Date(Date.now() + 3600000); // expires in 1 hour
     await this.userService.saveEntity(user);
 
     try {
       await this.mailService.sendResetPassword(user, user.resetToken);
     } catch (error) {
-      // Log the error internally, but don't change the response to the user
       console.error('Failed to send Reset Password email:', error);
+      return {
+        message: 'Failed to send Reset Password email',
+        statusCode: 500,
+      }; // Internal Server Error
     }
 
     // Return a success message
-    return { message: 'Reset Password email sent successfully' };
+    return {
+      message: 'Reset Password email sent successfully',
+      statusCode: 200,
+    }; // OK
   }
 
-  async resetPassword(dto: ResetPasswordDto) {
+  async resetPassword(
+    dto: ResetPasswordDto,
+  ): Promise<{ statusCode: number; message: string }> {
     const user = await this.userService.findOneByEmail(dto.email);
-    // Check for user existence and token validity
+
+    if (!user) {
+      return {
+        statusCode: 404,
+        message: 'Something is wrong with the email you provided.',
+      }; // Not Found
+    }
+
     if (
-      !user ||
       user.resetToken !== dto.resetToken ||
       new Date() > new Date(user.resetTokenExpiry)
     ) {
-      return { message: 'Invalid or expired token' };
+      return { statusCode: 400, message: 'Invalid or expired token' }; // Bad Request
     }
 
     const saltOrRounds = Number(
@@ -267,12 +326,14 @@ export class AuthService {
     try {
       await this.mailService.sendPasswordResetConfirmation(user);
     } catch (error) {
-      // Log the error internally, but don't change the response to the user
       console.error('Failed to send password reset confirmation email:', error);
+      return {
+        statusCode: 500,
+        message: 'Failed to send password reset confirmation email',
+      };
     }
 
-    // Return a success message
-    return { message: 'Password reset successfully' };
+    return { statusCode: 200, message: 'Password reset successfully' }; // OK
   }
 
   async validateGoogleUser(details: UserDetails) {
