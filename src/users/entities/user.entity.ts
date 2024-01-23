@@ -30,6 +30,10 @@ export class User {
 
   @Field({ nullable: true })
   @Column({ nullable: true })
+  avatar: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
   password: string;
 
   @Field()

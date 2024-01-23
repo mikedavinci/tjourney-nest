@@ -8,6 +8,9 @@ export class UserResponseDto {
   @IsString()
   email: string;
 
+  // @IsString()
+  // avatar: string;
+
   @IsString()
   displayName: string;
 

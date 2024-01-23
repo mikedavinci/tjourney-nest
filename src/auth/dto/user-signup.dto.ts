@@ -12,4 +12,8 @@ export class UserSignupDto {
   @MinLength(8)
   @MaxLength(32)
   password: string;
+
+  // @Field()
+  // @IsString()
+  // avatar: string;
 }
