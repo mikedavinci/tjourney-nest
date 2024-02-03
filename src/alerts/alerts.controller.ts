@@ -1,4 +1,10 @@
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import {
   Controller,
   Post,
@@ -13,6 +19,7 @@ import { CreateAlertDto } from './dto/create-alert.dto';
 import { Alert } from './entities/alerts.entity';
 import { FilterAlertDto } from './dto/filter-alert.dto';
 
+@ApiBearerAuth()
 @ApiTags('Alerts')
 @Controller('alerts')
 export class AlertController {

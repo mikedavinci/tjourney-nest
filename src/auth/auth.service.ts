@@ -43,8 +43,7 @@ export class AuthService {
 
       return {
         statusCode: 201, // 201 for created
-        message:
-          'User created successfully. Check your email for a verification link.',
+        message: 'An email has been sent to you. Please verify your account.',
         data: userResponse,
       };
     } catch (error) {

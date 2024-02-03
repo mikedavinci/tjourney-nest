@@ -1,8 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { CoingeckoService } from './coingecko.service';
 import { CreateCoingeckoDto } from './dto/create-coingecko.dto';
 import { UpdateCoingeckoDto } from './dto/update-coingecko.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('CoinGecko')
 @Controller('coingecko')
 export class CoingeckoController {
   constructor(private readonly coingeckoService: CoingeckoService) {}
@@ -23,7 +33,10 @@ export class CoingeckoController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCoingeckoDto: UpdateCoingeckoDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateCoingeckoDto: UpdateCoingeckoDto,
+  ) {
     return this.coingeckoService.update(+id, updateCoingeckoDto);
   }
 

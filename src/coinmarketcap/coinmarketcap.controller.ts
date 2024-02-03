@@ -1,6 +1,11 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { CoinmarketcapService } from './coinmarketcap.service';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiBearerAuth()
+@ApiTags('Coinmarketcap')
+@UseGuards(JwtAuthGuard)
 @Controller('coinmarketcap')
 export class CoinmarketcapController {
   constructor(private readonly coinmarketcapService: CoinmarketcapService) {}

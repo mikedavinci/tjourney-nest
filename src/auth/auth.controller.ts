@@ -9,7 +9,9 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { GoogleAuthGuard } from './guards/http-google-oath.guard';
 import { UserResponseDto } from 'src/users/dto/user-response.dto';
 import { RefreshJwtAuthGuard } from './guards/refresh-jwt-auth.guard';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -41,7 +43,7 @@ export class AuthController {
   }
 
   @UseGuards(RefreshJwtAuthGuard)
-  @Post('/refresh-token')
+  @Post('/refresh')
   refreshToken(@Req() request: Request): Promise<any> {
     return this.authService.refreshToken(request.body.refresh);
   }
