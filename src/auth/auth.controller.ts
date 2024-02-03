@@ -9,9 +9,10 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { GoogleAuthGuard } from './guards/http-google-oath.guard';
 import { UserResponseDto } from 'src/users/dto/user-response.dto';
 import { RefreshJwtAuthGuard } from './guards/refresh-jwt-auth.guard';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Authentication')
+@ApiExcludeController()
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
