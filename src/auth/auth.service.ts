@@ -97,7 +97,7 @@ export class AuthService {
 
       if (!user) {
         return {
-          message: 'Something is wrong the email you provided.',
+          message: 'Something is wrong with the email you provided.',
           statusCode: 404,
         }; // Not Found
       }

@@ -41,15 +41,29 @@ export class AlertService {
     return await this.alertRepository.findOne({ where: { id } });
   }
 
-  async getFilteredAlerts(bullOrBear: string, tf: string): Promise<Alert[]> {
-    // Use TypeORM's query builder for efficient filtering
-    const qb = this.alertRepository
-      .createQueryBuilder('alert')
-      .where("alert.alert_data::json->>'alert' ILIKE :bullOrBear", {
-        bullOrBear: `%${bullOrBear}%`,
-      })
-      .andWhere("alert.alert_data::json->>'tf' = :tf", { tf });
+  async getFilteredAlerts(
+    tf?: string,
+    // alertType?: string,
+    // createdAt?: string,
+  ): Promise<Alert[]> {
+    const query = this.alertRepository.createQueryBuilder('alert');
 
-    return await qb.getMany();
+    if (tf) {
+      query.andWhere("alert.alert_data ->> 'tf' ILIKE :tf", { tf: `tf%` });
+    }
+    // if (alertType) {
+    //   query.andWhere("alert.alert_data ->> 'alert' ILIKE :alertType", {
+    //     alertType: `%${alertType}%`,
+    //   });
+    // }
+    // if (createdAt) {
+    //   // Ensure createdAt is in a format compatible with PostgreSQL timestamp with time zone
+    //   const createdAtDate = new Date(createdAt);
+    //   query.andWhere('alert.createdAt >= :createdAt', {
+    //     createdAt: createdAtDate.toISOString(),
+    //   });
+    // }
+
+    return await query.getMany();
   }
 }

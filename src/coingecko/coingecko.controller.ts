@@ -1,47 +1,70 @@
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { CoinGeckoService } from './coingecko.service';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
-import { CoingeckoService } from './coingecko.service';
-import { CreateCoingeckoDto } from './dto/create-coingecko.dto';
-import { UpdateCoingeckoDto } from './dto/update-coingecko.dto';
-import { ApiTags } from '@nestjs/swagger';
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 
-@ApiTags('CoinGecko')
+// export interface CoinGeckoListingsParams {
+//   vs_currency: string;
+//   order?: string;
+//   per_page?: number;
+//   page?: number;
+//   sparkline?: boolean;
+// }
+
+// export interface CoinGeckoMarketChartDataParams {
+//   id: string;
+//   vs_currency: string;
+//   days: string;
+//   interval?: string;
+// }
+
+// export interface CoinGeckoSingleCoinDataParams {
+//   id: string;
+//   localization?: boolean;
+//   tickers?: boolean;
+//   market_data?: boolean;
+//   community_data?: boolean;
+//   developer_data?: boolean;
+//   sparkline?: boolean;
+// }
+@ApiBearerAuth()
+@ApiTags('Coingecko')
+@UseGuards(JwtAuthGuard)
 @Controller('coingecko')
-export class CoingeckoController {
-  constructor(private readonly coingeckoService: CoingeckoService) {}
+export class CoinGeckoController {
+  constructor(private readonly coinGeckoService: CoinGeckoService) {}
 
-  @Post()
-  create(@Body() createCoingeckoDto: CreateCoingeckoDto) {
-    return this.coingeckoService.create(createCoingeckoDto);
+  @Get('coins/list')
+  @ApiOperation({ summary: 'Get coins list' })
+  async getCoinList() {
+    return this.coinGeckoService.getCoinList();
   }
 
-  @Get()
-  findAll() {
-    return this.coingeckoService.findAll();
-  }
+  // @Get('coins/market_chart/range')
+  // @ApiQuery({ name: 'id', type: String })
+  // @ApiQuery({ name: 'vs_currency', type: String })
+  // @ApiQuery({ name: 'days', type: String })
+  // @ApiQuery({ name: 'interval', type: String, required: false })
+  // async getMarketChartRange(@Query() params: CoinGeckoMarketChartDataParams) {
+  //   return this.coinGeckoService.getMarketChartRange(params);
+  // }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.coingeckoService.findOne(+id);
-  }
+  // @Get('coins/:id')
+  // @ApiQuery({ name: 'id', type: String })
+  // @ApiQuery({ name: 'localization', type: Boolean, required: false })
+  // @ApiQuery({ name: 'tickers', type: Boolean, required: false })
+  // @ApiQuery({ name: 'market_data', type: Boolean, required: false })
+  // @ApiQuery({ name: 'community_data', type: Boolean, required: false })
+  // @ApiQuery({ name: 'developer_data', type: Boolean, required: false })
+  // @ApiQuery({ name: 'sparkline', type: Boolean, required: false })
+  // async getSingleCoinData(@Query() params: CoinGeckoSingleCoinDataParams) {
+  //   return this.coinGeckoService.getSingleCoinData(params);
+  // }
 
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateCoingeckoDto: UpdateCoingeckoDto,
-  ) {
-    return this.coingeckoService.update(+id, updateCoingeckoDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.coingeckoService.remove(+id);
-  }
+  // Add more endpoints as needed
 }

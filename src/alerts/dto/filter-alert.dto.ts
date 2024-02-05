@@ -1,12 +1,15 @@
-// src/alert/dto/filter-alert.dto.ts
+import { IsOptional, IsString, IsDateString } from 'class-validator';
 
-import { IsString, IsIn } from 'class-validator';
-
-export class FilterAlertDto {
+export class GetAlertsFilterDto {
+  @IsOptional()
   @IsString()
-  @IsIn(['Bullish', 'Bearish'])
-  bullOrBear!: string;
+  readonly tf?: string;
 
+  @IsOptional()
   @IsString()
-  tf!: string;
+  readonly alertType?: string;
+
+  @IsOptional()
+  @IsDateString()
+  readonly createdAt?: string;
 }

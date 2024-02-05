@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { CoingeckoService } from './coingecko.service';
-import { CoingeckoController } from './coingecko.controller';
+import { CoinGeckoController } from './coingecko.controller';
+import { CoinGeckoService } from './coingecko.service';
 
 @Module({
-  controllers: [CoingeckoController],
-  providers: [CoingeckoService],
+  controllers: [CoinGeckoController],
+  providers: [CoinGeckoService],
 })
 export class CoingeckoModule {}

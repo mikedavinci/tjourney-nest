@@ -2,6 +2,7 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -13,11 +14,11 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { AlertService } from './alerts.service';
 import { CreateAlertDto } from './dto/create-alert.dto';
 import { Alert } from './entities/alerts.entity';
-import { FilterAlertDto } from './dto/filter-alert.dto';
 
 @ApiBearerAuth()
 @ApiTags('Alerts')
@@ -53,16 +54,18 @@ export class AlertController {
     return await this.alertService.getAlertById(id);
   }
 
-  @Post('/filter')
-  @ApiOperation({
-    summary: 'Get Filtered Alerts based on Bullish/Bearish and TF',
-  })
+  @Get('filter')
+  @ApiOperation({ summary: 'Get Filtered Alerts' })
   @ApiResponse({ status: 200, type: [Alert] })
-  @ApiBody({ type: FilterAlertDto })
+  @ApiQuery({ name: 'tf', required: false, type: String })
+  // @ApiQuery({ name: 'alertType', required: false, type: String })
+  // @ApiQuery({ name: 'createdAt', required: false, type: String })
   async getFilteredAlerts(
-    @Body(ValidationPipe) filterAlertDto: FilterAlertDto,
+    @Query('tf') tf?: string,
+    // @Query('alertType') alertType?: string,
+    // @Query('createdAt') createdAt?: string,
   ): Promise<Alert[]> {
-    const { bullOrBear, tf } = filterAlertDto;
-    return await this.alertService.getFilteredAlerts(bullOrBear, tf);
+    console.log({ tf }); // Log to see the actual values received
+    return await this.alertService.getFilteredAlerts(tf);
   }
 }
