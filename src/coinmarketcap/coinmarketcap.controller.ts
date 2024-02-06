@@ -4,9 +4,9 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiBearerAuth()
-@ApiTags('Coinmarketcap')
+@ApiTags('CM Endpoints')
 @UseGuards(JwtAuthGuard)
-@Controller('coinmarketcap')
+@Controller('cm')
 export class CoinmarketcapController {
   constructor(private readonly coinmarketcapService: CoinmarketcapService) {}
 
