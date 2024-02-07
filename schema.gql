@@ -15,6 +15,9 @@ type User {
   resetTokenExpiry: DateTime
   createdDate: DateTime!
   updatedDate: DateTime!
+  isAdmin: Boolean!
+  isAffiliate: Boolean!
+  isProMember: Boolean!
 }
 
 """

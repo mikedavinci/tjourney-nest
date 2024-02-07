@@ -63,4 +63,16 @@ export class User {
   @Field()
   @UpdateDateColumn({ type: 'timestamptz', nullable: true })
   updatedDate: Date;
+
+  @Field()
+  @Column({ default: false })
+  isAdmin: boolean;
+
+  @Field()
+  @Column({ default: false })
+  isAffiliate: boolean;
+
+  @Field()
+  @Column({ default: false })
+  isProMember: boolean;
 }

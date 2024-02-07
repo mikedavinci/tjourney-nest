@@ -12,16 +12,17 @@ import {
   Body,
   ValidationPipe,
   Get,
-  Param,
-  ParseIntPipe,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { AlertService } from './alerts.service';
 import { CreateAlertDto } from './dto/create-alert.dto';
 import { Alert } from './entities/alerts.entity';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @ApiBearerAuth()
 @ApiTags('Alerts')
+@UseGuards(JwtAuthGuard)
 @Controller('alerts')
 export class AlertController {
   constructor(private readonly alertService: AlertService) {}
@@ -47,25 +48,24 @@ export class AlertController {
     return await this.alertService.getAllAlerts();
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get an Alert by ID' })
-  @ApiResponse({ status: 200, type: Alert })
-  async getAlertById(@Param('id', ParseIntPipe) id: number): Promise<Alert> {
-    return await this.alertService.getAlertById(id);
-  }
-
   @Get('filter')
   @ApiOperation({ summary: 'Get Filtered Alerts' })
   @ApiResponse({ status: 200, type: [Alert] })
   @ApiQuery({ name: 'tf', required: false, type: String })
-  // @ApiQuery({ name: 'alertType', required: false, type: String })
-  // @ApiQuery({ name: 'createdAt', required: false, type: String })
+  @ApiQuery({ name: 'alertType', required: false, type: String })
+  @ApiQuery({ name: 'daysAgo', required: false, type: Number })
+  @ApiQuery({ name: 'ticker', required: false, type: String })
   async getFilteredAlerts(
     @Query('tf') tf?: string,
-    // @Query('alertType') alertType?: string,
-    // @Query('createdAt') createdAt?: string,
+    @Query('alertType') alertType?: string,
+    @Query('daysAgo') daysAgo?: number,
+    @Query('ticker') ticker?: string,
   ): Promise<Alert[]> {
-    console.log({ tf }); // Log to see the actual values received
-    return await this.alertService.getFilteredAlerts(tf);
+    return await this.alertService.getFilteredAlerts(
+      tf,
+      alertType,
+      daysAgo,
+      ticker,
+    );
   }
 }

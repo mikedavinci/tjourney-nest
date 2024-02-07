@@ -8,6 +8,35 @@ export interface CoinGeckoSimpleParams {
   precision?: string;
 }
 
+export interface CoinGeckoCoinsMarketsParams {
+  vs_currency: string;
+  ids?: string;
+  category?: string;
+  order?: string;
+  per_page?: number;
+  page?: number;
+  sparkline?: boolean;
+  price_change_percentage?: string;
+  locale?: string;
+  precision?: string;
+}
+
+export interface CoinGeckoCoinsByIdParams {
+  localization?: string;
+  tickers?: boolean;
+  market_data?: boolean;
+  community_data?: boolean;
+  developer_data?: boolean;
+  sparkline?: boolean;
+}
+
+export interface CoinGeckoCoinOHLCParams {
+  vs_currency: string;
+  days: string;
+  precision?: string;
+  interval?: string;
+}
+
 export interface CoinGeckoListingsParams {
   vs_currency: string;
   order?: string;
@@ -60,6 +89,15 @@ export interface CoinGeckoNFTMarketDataParams {
   order?: string;
   per_page?: number;
   page?: number;
+}
+
+export interface CoinGeckoExchangesListParams {
+  per_page?: number;
+  page?: number;
+}
+
+export interface CoinGeckoExchangesByIdParams {
+  days: string;
 }
 
 export interface CoinGeckoNFTMarketChartParams {

@@ -17,6 +17,10 @@ import {
   CoinGeckoNFTsListParams,
   CoinGeckoSimpleParams,
   CoinGeckoTopGainersLosersParams,
+  CoinGeckoCoinsMarketsParams,
+  CoinGeckoCoinsByIdParams,
+  CoinGeckoCoinOHLCParams,
+  CoinGeckoExchangesListParams,
 } from './interface.coingecko';
 
 @ApiBearerAuth()
@@ -89,7 +93,9 @@ export class CoinGeckoController {
   @ApiOperation({
     summary:
       'List  all supported coins id, name and symbol (no pagination required)',
-    description: `All the coins that show up on this /coins/list endpoint are Active coins. If a coin is inactive or deactivated, it will be removed from /coins/list.
+    description: `
+    - All the coins that show up on this /coins/list endpoint are Active coins. 
+    - If a coin is inactive or deactivated, it will be removed from /coins/list.
     
     Cache / Update Frequency: every 5 minutes`,
   })
@@ -101,15 +107,219 @@ export class CoinGeckoController {
   @ApiOperation({
     summary:
       'List all supported coins price, market cap, volume, and market related data',
-    description: `List all supported coins price, market cap, volume, and market related data | Cache / Update Frequency: every 10 minutes
+    description: `Use this to obtain all the coins market data (price, market cap, volume), per page.
+    Note: when both 'category' and 'ids' parameters are supplied, the 'category' parameter takes precedence over the 'ids' parameter.
+    
+    Cache / Update Frequency: every 45 seconds
     `,
+  })
+  @ApiQuery({
+    name: 'precision',
+    type: String,
+    required: false,
+    description:
+      'Full or any value between 0 - 18 to specify decimal place for currency price value',
+  })
+  @ApiQuery({
+    name: 'locale',
+    type: String,
+    required: false,
+    description: `Valid values: ar, bg, cs, da, de, el, en, es, fi, fr, he, hi, hr, hu, id, it, ja, ko, lt, nl, no, pl, pt, ro, ru, sk, sl, sv, th, tr, uk, vi, zh, zh-tw
+
+    Default value : en`,
+  })
+  @ApiQuery({
+    name: 'price_change_percentage',
+    type: String,
+    required: false,
+    description: `Include price change percentage in 1h, 24h, 7d, 14d, 30d, 200d, 1y (eg. '1h,24h,7d' comma-separated, invalid values will be discarded)`,
+  })
+  @ApiQuery({
+    name: 'sparkline',
+    type: Boolean,
+    required: false,
+    description:
+      'Include sparkline 7 days data (eg. true, false) | Default value: false',
+  })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+    description: 'Page through results | Default value: 1',
+  })
+  @ApiQuery({
+    name: 'per_page',
+    type: Number,
+    required: false,
+    description: 'valid values: 1 … 250 | Default value: 100',
+  })
+  @ApiQuery({
+    name: 'order',
+    type: String,
+    required: false,
+    description: `valid values: market_cap_asc, market_cap_desc, volume_asc, volume_desc, id_asc, id_desc
+      sort results by field.
+      
+      Default value : market_cap_desc`,
+  })
+  @ApiQuery({
+    name: 'category',
+    type: String,
+    required: false,
+    description: 'Filter by coin category. Refer to coin/categories/list',
+  })
+  @ApiQuery({
+    name: 'ids',
+    type: String,
+    required: false,
+    description:
+      'The ids of the coin, comma separated crytocurrency symbols (base)',
   })
   @ApiQuery({
     name: 'vs_currency',
     type: String,
     required: true,
-    description: 'Valid values: usd, jpy, krw, eur, mxn, etc',
+    description: 'The target currency of market data (usd, eur, jpy, etc.)',
   })
+  async getCoinsMarkets(@Query() params: CoinGeckoCoinsMarketsParams) {
+    return this.coinGeckoService.getCoinsMarkets(params);
+  }
+
+  @Get('coins/:id')
+  @ApiOperation({
+    summary:
+      'Get current data (name, price, market, ... including exchange tickers) for a coin',
+    description: `
+    Get current data (name, price, market, ... including exchange tickers) for a coin.
+
+IMPORTANT:
+Ticker object is limited to 100 items, to get more tickers, use /coins/{id}/tickers
+Ticker is_stale is true when ticker that has not been updated/unchanged from the exchange for more than 8 hours.
+Ticker is_anomaly is true if ticker's price is outliered by our system.
+You are responsible for managing how you want to display these information (e.g. footnote, different background, change opacity, hide)
+
+Note: to check if a price is stale, please refer to last_updated of the price.
+
+Dictionary:
+
+- last: latest unconverted price in the respective pair target currency
+- volume: unconverted 24h trading volume in the respective pair target currency
+- converted_last: latest converted price in BTC, ETH, and USD
+- converted_volume: converted 24h trading volume in BTC, ETH, and USD
+- timestamp: returns the last time that the price has changed
+- last_traded_at: returns the last time that the price has changed
+- last_fetch_at: returns the last time we call the API
+
+Cache / Update Frequency: every 60 seconds
+Data for Twitter, Telegram and Reddit will be updated on daily basis.
+    `,
+  })
+  @ApiQuery({
+    name: 'sparkline',
+    type: Boolean,
+    required: false,
+    description:
+      'Include sparkline 7 days data (eg. true, false) | Default value: false',
+  })
+  @ApiQuery({
+    name: 'developer_data',
+    type: Boolean,
+    required: false,
+    description: 'Include developer_data data (true/false) [default: true]',
+  })
+  @ApiQuery({
+    name: 'community_data',
+    type: Boolean,
+    required: false,
+    description: 'Include community_data data (true/false) [default: true]',
+  })
+  @ApiQuery({
+    name: 'market_data',
+    type: Boolean,
+    required: false,
+    description: 'Include market_data (true/false) [default: true]',
+  })
+  @ApiQuery({
+    name: 'tickers',
+    type: Boolean,
+    required: false,
+    description: 'Include tickers data (true/false) [default: true]',
+  })
+  @ApiQuery({
+    name: 'localization',
+    type: String,
+    required: false,
+    description:
+      'Include all localized languages in response (true/false) [default: true]',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+    description: 'Pass the coin id (can be obtained from /coins) eg. bitcoin',
+  })
+  async getCoinData(
+    @Param('id') id: string,
+    @Query() query: CoinGeckoCoinsByIdParams,
+  ) {
+    return this.coinGeckoService.getCoinData(id, query);
+  }
+
+  @Get('coins/:id/ohlc')
+  @ApiOperation({
+    summary: `Get coin historical market data including price, market cap, and 24h volume, by number of days away from now.`,
+    description: `Candle's body - data granularity is automatic (cannot be adjusted for public api users):
+
+    1 - 2 days: 30 minutes
+    3 - 30 days: 4 hours
+    31 days and beyond: 4 days
+
+    Daily candle interval parameter is available for paid plan users only (Analyst/Lite/Pro/Enterprise), use interval=daily parameter in your request:
+    
+    - 'daily' interval: available for 1/7/14/30/90/180 days
+
+    Cache / Update Frequency: every 30 minutes
+    `,
+  })
+  @ApiQuery({
+    name: 'interval',
+    type: String,
+    required: false,
+    description:
+      'Valid values: daily, 4h, 1h, 30m, 15m, 5m, 1m | Default value: 1h',
+  })
+  @ApiQuery({
+    name: 'precision',
+    type: String,
+    required: false,
+    description:
+      'Full or any value between 0 - 18 to specify decimal place for price',
+  })
+  @ApiQuery({
+    name: 'days',
+    type: String,
+    required: true,
+    description: 'Data up to number of days ago (1/7/14/30/90/180/365/max)',
+  })
+  @ApiQuery({
+    name: 'vs_currency',
+    type: String,
+    required: true,
+    description: 'The target currency of market data (usd, eur, jpy, etc.)',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+    description:
+      'Pass the coin id (can be obtained from /coins/list) eg. bitcoin',
+  })
+  async getCoinOHLC(
+    @Param('id') id: string,
+    @Query() query: CoinGeckoCoinOHLCParams,
+  ) {
+    return this.coinGeckoService.getCoinOHLC(id, query);
+  }
 
   // CONTRACT
 
@@ -146,6 +356,27 @@ export class CoinGeckoController {
   }
 
   // EXCHANGES
+  @Get('exchanges')
+  @ApiOperation({
+    summary: 'List all exchanges (Active with trading volumes)',
+    description: `List all exchanges | Cache / Update Frequency: every 60 seconds
+    `,
+  })
+  @ApiQuery({
+    name: 'per_page',
+    type: Number,
+    required: false,
+    description: 'Valid values: 1 … 250 | Default value: 100',
+  })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+    description: 'Page through results',
+  })
+  async getExchangesList(@Query() params: CoinGeckoExchangesListParams) {
+    return this.coinGeckoService.getExchangesList(params);
+  }
 
   // DERIVATES
 
@@ -229,8 +460,8 @@ export class CoinGeckoController {
   @Get('search/trending')
   @ApiOperation({
     summary: 'Get Trending Coins, top 7 in the last 24 hours.',
-    description: `Top-7 trending coins on CoinGecko as searched by users in the last 24 hours (Ordered by most popular first).
-  Top-5 trending NFTs on CoinGecko based on the highest trading volume in the last 24 hours.
+    description: `Top-7 trending coins as searched by users in the last 24 hours (Ordered by most popular first).
+  Top-5 trending NFTs based on the highest trading volume in the last 24 hours.
   
   Update Frequency: every 10 minute`,
   })
@@ -333,7 +564,7 @@ export class CoinGeckoController {
       Tips:
 - Other nfts endpoints are also available on our Free API documentation page.
 - By default, this endpoint will return 100 results per page and only 1 page.
-- To get the number 251-500 NFTs ranked by 24hr volume as seen on CoinGecko NFT page , you may include these parameters: per_page=250, page=2 and order=h24_volume_usd_desc
+- To get the number 251-500 NFTs ranked by 24hr volume, you may include these parameters: per_page=250, page=2 and order=h24_volume_usd_desc
 - Update Frequency: 5 minutes
       `,
   })

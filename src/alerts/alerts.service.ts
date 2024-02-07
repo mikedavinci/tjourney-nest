@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Alert } from './entities/alerts.entity';
 import { CreateAlertDto } from './dto/create-alert.dto';
-
+import * as moment from 'moment';
 @Injectable()
 export class AlertService {
   constructor(
@@ -37,32 +37,31 @@ export class AlertService {
     return await this.alertRepository.find();
   }
 
-  async getAlertById(id: number): Promise<Alert> {
-    return await this.alertRepository.findOne({ where: { id } });
-  }
-
   async getFilteredAlerts(
     tf?: string,
-    // alertType?: string,
-    // createdAt?: string,
+    alertType?: string,
+    daysAgo?: number,
+    ticker?: string,
   ): Promise<Alert[]> {
     const query = this.alertRepository.createQueryBuilder('alert');
 
     if (tf) {
-      query.andWhere("alert.alert_data ->> 'tf' ILIKE :tf", { tf: `tf%` });
+      query.andWhere("alert.alert_data ->> 'tf' = :tf", { tf });
     }
-    // if (alertType) {
-    //   query.andWhere("alert.alert_data ->> 'alert' ILIKE :alertType", {
-    //     alertType: `%${alertType}%`,
-    //   });
-    // }
-    // if (createdAt) {
-    //   // Ensure createdAt is in a format compatible with PostgreSQL timestamp with time zone
-    //   const createdAtDate = new Date(createdAt);
-    //   query.andWhere('alert.createdAt >= :createdAt', {
-    //     createdAt: createdAtDate.toISOString(),
-    //   });
-    // }
+    if (alertType) {
+      query.andWhere("alert.alert_data ->> 'alert' ILIKE :alertType", {
+        alertType: `%${alertType}%`,
+      });
+    }
+
+    if (daysAgo) {
+      const dateLimit = moment().subtract(daysAgo, 'days').toDate();
+      query.andWhere('alert.createdAt > :dateLimit', { dateLimit });
+    }
+
+    if (ticker) {
+      query.andWhere("alert.alert_data ->> 'ticker' = :ticker", { ticker });
+    }
 
     return await query.getMany();
   }

@@ -2,6 +2,10 @@ import { Injectable, HttpException } from '@nestjs/common';
 import axios from 'axios';
 import {
   CoinGeckoCategoriesParams,
+  CoinGeckoCoinOHLCParams,
+  CoinGeckoCoinsByIdParams,
+  CoinGeckoCoinsMarketsParams,
+  CoinGeckoExchangesListParams,
   CoinGeckoMarketCapChart,
   CoinGeckoNFTMarketChartByContractAddressParams,
   CoinGeckoNFTMarketChartParams,
@@ -62,6 +66,54 @@ export class CoinGeckoService {
     }
   }
 
+  async getCoinsMarkets(params: CoinGeckoCoinsMarketsParams): Promise<any> {
+    try {
+      const response = await axios.get(`${this.baseDemoUrl}/coins/markets`, {
+        headers: this.cgdApiHeaders,
+        params,
+      });
+      return response.data;
+    } catch (error) {
+      // console.log(error);
+      throw new HttpException(
+        'Failed to fetch coins markets from CoinGecko',
+        error.response?.status || 500,
+      );
+    }
+  }
+
+  async getCoinData(id: string, query: CoinGeckoCoinsByIdParams): Promise<any> {
+    try {
+      const response = await axios.get(`${this.baseDemoUrl}/coins/${id}`, {
+        headers: this.cgdApiHeaders,
+        params: query,
+      });
+      return response.data;
+    } catch (error) {
+      // console.log(error);
+      throw new HttpException(
+        'Failed to fetch coin data from CoinGecko',
+        error.response?.status || 500,
+      );
+    }
+  }
+
+  async getCoinOHLC(id: string, query: CoinGeckoCoinOHLCParams): Promise<any> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/coins/${id}/ohlc`, {
+        headers: this.cgApiHeaders,
+        params: query,
+      });
+      return response.data;
+    } catch (error) {
+      // console.log(error);
+      throw new HttpException(
+        'Failed to fetch coin OHLC from CoinGecko',
+        error.response?.status || 500,
+      );
+    }
+  }
+
   // CONTRACT
 
   // ASSET PLATFORMS
@@ -104,6 +156,21 @@ export class CoinGeckoService {
   }
 
   // EXCHANGES
+  async getExchangesList(query: CoinGeckoExchangesListParams): Promise<any> {
+    try {
+      const response = await axios.get(`${this.baseDemoUrl}/exchanges`, {
+        headers: this.cgdApiHeaders,
+        params: query,
+      });
+      return response.data;
+    } catch (error) {
+      // console.log(error);
+      throw new HttpException(
+        'Failed to fetch exchanges list from CoinGecko',
+        error.response?.status || 500,
+      );
+    }
+  }
 
   // DERIVATES
 

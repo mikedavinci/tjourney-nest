@@ -8,8 +8,6 @@ import {
 import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionsFilter } from './common/filters';
-// import * as passport from 'passport';
-// import * as session from 'express-session';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });

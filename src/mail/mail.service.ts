@@ -15,6 +15,7 @@ export class MailService {
         // ✏️ filling curly brackets with content
         email: user.email,
         resetToken,
+        resetUrl: `${process.env.RESET_PASSWORD_URL}`,
       },
     });
   }
@@ -41,6 +42,7 @@ export class MailService {
         // ✏️ filling curly brackets with content
         email: user.email,
         token,
+        verifyUrl: `${process.env.VERIFY_EMAIL_URL}`,
       },
     });
   }
