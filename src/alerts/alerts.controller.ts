@@ -22,7 +22,6 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @ApiBearerAuth()
 @ApiTags('Alerts')
-@UseGuards(JwtAuthGuard)
 @Controller('alerts')
 export class AlertController {
   constructor(private readonly alertService: AlertService) {}
@@ -42,6 +41,7 @@ export class AlertController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get All Alerts!' })
   @ApiResponse({ status: 200, type: [Alert] })
   async getAllAlerts(): Promise<Alert[]> {
@@ -49,6 +49,7 @@ export class AlertController {
   }
 
   @Get('filter')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get Filtered Alerts' })
   @ApiResponse({ status: 200, type: [Alert] })
   @ApiQuery({ name: 'tf', required: false, type: String })
