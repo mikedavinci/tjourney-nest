@@ -14,9 +14,17 @@ import {
   CoinGeckoSimpleParams,
   CoinGeckoTopGainersLosersParams,
 } from './interface.coingecko';
-
+import * as Promise from 'bluebird';
+import { Token } from './entities/token.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 @Injectable()
 export class CoinGeckoService {
+  constructor(
+    @InjectRepository(Token)
+    private tokenRepository: Repository<Token>,
+  ) {}
+
   private readonly cgApiHeaders = {
     // eslint-disable-next-line prettier/prettier
     'x-cg-pro-api-key': process.env.COINGECKO_PRO_API_KEY,
@@ -93,6 +101,100 @@ export class CoinGeckoService {
       // console.log(error);
       throw new HttpException(
         'Failed to fetch coin data from CoinGecko',
+        error.response?.status || 500,
+      );
+    }
+  }
+
+  async getCoinDataReduced(
+    id: string,
+    query: CoinGeckoCoinsByIdParams,
+  ): Promise<any> {
+    try {
+      const response = await axios.get(`${this.baseDemoUrl}/coins/${id}`, {
+        headers: this.cgdApiHeaders,
+        params: query,
+      });
+      const data = response.data;
+
+      // Extract only the needed fields
+      const reducedData = {
+        id: data.id,
+        symbol: data.symbol,
+        name: data.name,
+        web_slug: data.web_slug,
+        asset_platform_id: data.asset_platform_id ?? null,
+        platforms: data.platforms ?? {},
+        detail_platforms: data.detail_platforms ?? {},
+        block_time_in_minutes: data.block_time_in_minutes ?? 0,
+        hashing_algorithm: data.hashing_algorithm ?? null,
+        categories: data.categories ?? [],
+        preview_listing: data.preview_listing ?? false,
+        public_notice: data.public_notice ?? null,
+        additional_notices: data.additional_notices ?? [],
+        localization: data.localization.en ?? {},
+        description: data.description?.en ?? '',
+        links: data.links ?? {},
+        image: {
+          thumb: data.image?.thumb ?? '',
+          small: data.image?.small ?? '',
+          large: data.image?.large ?? '',
+        },
+        country_origin: data.country_origin ?? null,
+        genesis_date: data.genesis_date ?? null,
+        sentiment_votes_up_percentage: data.sentiment_votes_up_percentage ?? 0,
+        sentiment_votes_down_percentage:
+          data.sentiment_votes_down_percentage ?? 0,
+        watchlist_portfolio_users: data.watchlist_portfolio_users ?? 0,
+        market_cap_rank: data.market_cap_rank ?? null,
+        market_data: {
+          current_price: data.market_data?.current_price?.usd ?? 0,
+          // Continue for other market_data fields, applying optional chaining and default values
+          ath: data.market_data?.ath?.usd ?? 0,
+          // ...
+          last_updated: data.market_data?.last_updated ?? 'N/A',
+        },
+        last_updated: data.last_updated ?? 'N/A',
+        tickers:
+          data.tickers?.map((ticker) => ({
+            base: ticker.base ?? 'N/A',
+            target: ticker.target ?? 'N/A',
+            market: {
+              name: ticker.market?.name ?? 'N/A',
+              identifier: ticker.market?.identifier ?? 'N/A',
+              has_trading_incentive:
+                ticker.market?.has_trading_incentive ?? false,
+            },
+            last: ticker.last ?? 0,
+            volume: ticker.volume ?? 0,
+            converted_last: {
+              btc: ticker.converted_last?.btc ?? 0,
+              eth: ticker.converted_last?.eth ?? 0,
+              usd: ticker.converted_last?.usd ?? 0,
+            },
+            converted_volume: {
+              btc: ticker.converted_volume?.btc ?? 0,
+              eth: ticker.converted_volume?.eth ?? 0,
+              usd: ticker.converted_volume?.usd ?? 0,
+            },
+            trust_score: ticker.trust_score ?? 'N/A',
+            bid_ask_spread_percentage: ticker.bid_ask_spread_percentage ?? 0,
+            timestamp: ticker.timestamp ?? 'N/A',
+            last_traded_at: ticker.last_traded_at ?? 'N/A',
+            last_fetch_at: ticker.last_fetch_at ?? 'N/A',
+            is_anomaly: ticker.is_anomaly ?? false,
+            is_stale: ticker.is_stale ?? false,
+            trade_url: ticker.trade_url ?? 'N/A',
+            token_info_url: ticker.token_info_url ?? 'N/A',
+            coin_id: ticker.coin_id ?? 'N/A',
+            target_coin_id: ticker.target_coin_id ?? 'N/A',
+          })) ?? [], // Use an empty array as default if tickers are not present
+      };
+
+      return reducedData;
+    } catch (error) {
+      throw new HttpException(
+        'Failed to fetch reduced coin data from CoinGecko',
         error.response?.status || 500,
       );
     }
@@ -288,6 +390,37 @@ export class CoinGeckoService {
       // console.log(error);
       throw new HttpException(
         'Failed to fetch newly added coins from CoinGecko',
+        error.response?.status || 500,
+      );
+    }
+  }
+
+  async getNewlyAddedCoinDetails(): Promise<any[]> {
+    try {
+      const coins = await this.getNewlyAddedCoins(); // Fetch the list of newly added coins
+
+      // Use Bluebird.map for parallel requests with error handling
+      const coinDetails = await Promise.map(
+        coins,
+        (coin: any) => {
+          return Promise.try(() => {
+            return this.getCoinDataReduced(coin.id, {}); // Fetch coin details
+          }).catch((error: any) => {
+            // Handle individual coin fetch errors, e.g., log or return a default value
+            console.error(
+              `Failed to fetch details for coin ${coin.id}:`,
+              error,
+            );
+            return null; // Return null or some error indicator for this coin
+          });
+        },
+        { concurrency: 5 },
+      ); // Set a reasonable concurrency limit to avoid API rate limits
+
+      return coinDetails.filter((detail: any) => detail !== null); // Optionally, filter out failed requests
+    } catch (error) {
+      throw new HttpException(
+        'Failed to fetch newly added coin details',
         error.response?.status || 500,
       );
     }

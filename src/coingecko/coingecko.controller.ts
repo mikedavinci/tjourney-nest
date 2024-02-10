@@ -503,10 +503,16 @@ Data for Twitter, Telegram and Reddit will be updated on daily basis.
     return this.coinGeckoService.getNewlyAddedCoins();
   }
 
+  @Get('coins/details/new')
+  @ApiOperation({ summary: 'Get details for the latest 200 added coins' })
+  async getNewlyAddedCoinDetails() {
+    return this.coinGeckoService.getNewlyAddedCoinDetails();
+  }
+
   @Get('coins/top_gainers_losers')
   @ApiOperation({
-    summary: 'PRO 🔥 - Get the top 30 gainers and losers',
-    description: `🔥 Get the top 30 coins with largest price gain and loss by a specific time duration. Update Frequency: 5 minutes
+    summary: 'PRO 🔥 - Get the top gainers and losers',
+    description: `🔥 Get the top coins with largest price gain and loss by a specific time duration. Update Frequency: 5 minutes
       
       Note: only coins with at least $50,000 24hour trading volume will be included`,
   })

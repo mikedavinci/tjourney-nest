@@ -1,0 +1,187 @@
+{
+  "id": "nexellia",
+  "symbol": "nxl",
+  "name": "NEXELLIA",
+  "web_slug": "nexellia",
+  "asset_platform_id": null,
+  "platforms": {
+    "": null
+  },
+  "detail_platforms": {
+    "": {
+      "decimal_place": null,
+      "contract_address": null
+    }
+  },
+  "block_time_in_minutes": 0,
+  "hashing_algorithm": null,
+  "categories": [],
+  "preview_listing": false,
+  "public_notice": null,
+  "additional_notices": [],
+  "localization": {
+    "en": "NEXELLIA"
+  },
+  "description": {
+    "en": ""
+  },
+  "links": {
+    "homepage": [
+      "https://nexell-ia.net/",
+      "",
+      ""
+    ],
+    "whitepaper": "https://nexell-ia.net/Whitepaper%20-%20Nexellia%20Network.pdf",
+    "blockchain_site": [
+      "https://explorer.nexell-ia.net/",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "official_forum_url": [
+      "",
+      "",
+      ""
+    ],
+    "chat_url": [
+      "https://discord.gg/a36hbFCs",
+      "",
+      ""
+    ],
+    "announcement_url": [
+      null,
+      null
+    ],
+    "twitter_screen_name": "nexellia",
+    "facebook_username": null,
+    "bitcointalk_thread_identifier": null,
+    "telegram_channel_identifier": "NexelliaNetwork",
+    "subreddit_url": null,
+    "repos_url": {
+      "github": [
+        "https://github.com/Nexellia-Network"
+      ],
+      "bitbucket": []
+    }
+  },
+  "image": {
+    "thumb": "https://assets.coingecko.com/coins/images/35124/thumb/nexellia.jpg?1707412272",
+    "small": "https://assets.coingecko.com/coins/images/35124/small/nexellia.jpg?1707412272",
+    "large": "https://assets.coingecko.com/coins/images/35124/large/nexellia.jpg?1707412272"
+  },
+  "country_origin": null,
+  "genesis_date": null,
+  "sentiment_votes_up_percentage": 90.32,
+  "sentiment_votes_down_percentage": 9.68,
+  "watchlist_portfolio_users": 296,
+  "market_cap_rank": null,
+  "market_data": {
+    "current_price": {
+      "usd": 0.0280039
+    },
+    "total_value_locked": null,
+    "mcap_to_tvl_ratio": null,
+    "fdv_to_tvl_ratio": null,
+    "roi": null,
+    "ath": {
+      "usd": 0.03699916
+    },
+    "ath_change_percentage": {
+      "usd": -18.92116
+    },
+    "ath_date": {
+      "usd": "2024-02-08T23:52:02.909Z"
+    },
+    "atl": {
+      "usd": 0.02019803
+    },
+    "atl_change_percentage": {
+      "usd": 48.52189
+    },
+    "atl_date": {
+      "usd": "2024-02-08T17:55:05.211Z"
+    },
+    "market_cap": {
+      "usd": 0
+    },
+    "market_cap_rank": null,
+    "fully_diluted_valuation": {
+      "usd": 404707
+    },
+    "market_cap_fdv_ratio": null,
+    "total_volume": {
+      "usd": 64390
+    },
+    "high_24h": {
+      "usd": 0.03699916
+    },
+    "low_24h": {
+      "usd": 0.02019803
+    },
+    "price_change_24h": 0.00643242,
+    "price_change_percentage_24h": 29.81908,
+    "price_change_percentage_7d": 0,
+    "price_change_percentage_14d": 0,
+    "price_change_percentage_30d": 0,
+    "price_change_percentage_60d": 0,
+    "price_change_percentage_200d": 0,
+    "price_change_percentage_1y": 0,
+    "market_cap_change_24h": 0,
+    "market_cap_change_percentage_24h": 0,
+    "price_change_24h_in_currency": {
+      "usd": 0.00643242
+    },
+    "price_change_percentage_1h_in_currency": {
+      "usd": -3.44854
+    },
+    "price_change_percentage_24h_in_currency": {  
+      "usd": 29.81908
+    },
+ 
+    "total_supply": 14455022,
+    "max_supply": 788940000,
+    "circulating_supply": 0,
+    "last_updated": "2024-02-09T02:44:33.078Z"
+  },
+  "last_updated": "2024-02-09T02:44:33.078Z",
+  "tickers": [
+    {
+      "base": "NXL",
+      "target": "USDT",
+      "market": {
+        "name": "TradeOgre",
+        "identifier": "trade_ogre",
+        "has_trading_incentive": false
+      },
+      "last": 0.02800102,
+      "volume": 2299314.431059297,
+      "converted_last": {
+        "btc": 6.10004e-7,
+        "eth": 0.00001146,
+        "usd": 0.0280039
+      },
+      "converted_volume": {
+        "btc": 1.402591,
+        "eth": 26.339701,
+        "usd": 64390
+      },
+      "trust_score": "green",
+      "bid_ask_spread_percentage": 3.042748,
+      "timestamp": "2024-02-09T02:44:23+00:00",
+      "last_traded_at": "2024-02-09T02:44:23+00:00",
+      "last_fetch_at": "2024-02-09T02:44:23+00:00",
+      "is_anomaly": false,
+      "is_stale": false,
+      "trade_url": "https://tradeogre.com/exchange/NXL-USDT",
+      "token_info_url": null,
+      "coin_id": "nexellia",
+      "target_coin_id": "tether"
+    }
+  ]
+}
