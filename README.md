@@ -39,12 +39,20 @@ $ npm install
 
 $ docker compose up --detach
 
-Seed Courses (for courses):
+## Seed Courses (for courses):
 ```bash
 \copy courses(title, subtitle, description, instructor, language, level, rating, num_reviews, duration, price, completion_certificate) FROM 'C:\Users\mike\OneDrive\Documents\GitHub\intention-be\seed-files\courses.csv' WITH DELIMITER ',' CSV HEADER;
-
-
 ```
+
+## seed product data
+
+Seed Products:
+
+```bash
+\copy product(name, internal_code, price, subscription, price_per_month, description, quantity, currency, stripe_product_id, stripe_price_id, payment_method_types, tax_code) FROM '~/Documents/GitHub/pw-be/seeds/products.csv' WITH DELIMITER ',' CSV HEADER;
+```
+# \copy product(name, internal_code, price, subscription, price_per_month, description, quantity, currency, stripe_product_id, stripe_price_id, payment_method_types, tax_code) FROM '~/Documents/GitHub/pw-be/seeds/prod_products.csv' WITH DELIMITER ',' CSV HEADER;
+
 
 ## Running the app
 

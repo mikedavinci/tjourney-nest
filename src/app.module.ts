@@ -1,50 +1,60 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-// import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-// import { APP_GUARD } from '@nestjs/core';
-import { AlertModule } from './alerts/alerts.module';
 import { CoinmarketcapModule } from './coinmarketcap/coinmarketcap.module';
 import { CoingeckoModule } from './coingecko/coingecko.module';
-import { OneinchModule } from './oneinch/oneinch.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { AppService } from './app.service';
-import { AppController } from './app.controller';
 import { HttpModule } from '@nestjs/axios';
 import { MailModule } from './mail/mail.module';
-import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { OrganizationModule } from './organization/organization.module';
+import { SendpulseModule } from './sendpulse/sendpulse.module';
+import { CareerModule } from './career/career.module';
+import { ContactUsModule } from './contact_us/contact_us.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { AffiliatePartnersModule } from './affiliate_partners/affiliate_partners.module';
+import { HelpcenterModule } from './helpcenter/helpcenter.module';
+import { StripeModule } from './stripe/stripe.module';
+import { AlertModule } from './alerts/alerts.module';
+import { CrmModule } from './crm/crm.module';
 
 @Module({
   imports: [
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      driver: ApolloDriver,
-      autoSchemaFile: 'schema.gql',
-    }),
+    // GraphQLModule.forRoot<ApolloDriverConfig>({
+    //   driver: ApolloDriver,
+    //   autoSchemaFile: 'schema.gql',
+    // }),
     ConfigModule.forRoot({
+      isGlobal: true,
       envFilePath:
         process.env.NODE_ENV === 'production' ? '.env' : '.env.development',
     }),
-    AuthModule,
     TypeOrmModule.forRootAsync({
       imports: [
         ConfigModule,
-        // ThrottlerModule.forRoot([
-        //   {
-        //     ttl: 60, // Time-to-live (in seconds) for the request count for 60 seconds
-        //     limit: 100, // Maximum number of requests per user within the ttl duration
-        //   },
-        // ]),
+        ThrottlerModule.forRoot([
+          {
+            ttl: 60, // Time-to-live (in seconds) for the request count for 60 seconds
+            limit: 10, // Max # of requests per user within the ttl durationsxs
+          },
+        ]),
       ],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         type: 'postgres',
         autoLoadEntities: true,
-        url: configService.get('DO_DATABASE_URL'),
+        url: 'postgres://mickey:NoMames24!aA@159.65.175.175:5432/ptwd',
+        // process.env.NODE_ENV !== 'production'
+        //   ? process.env.DO_DATABASE_URL
+        //   : process.env.PROD_DATABASE_URL,
         synchronize:
-          configService.get('NODE_ENV') !== 'production' ? true : false,
+          configService.get('NODE_ENV') !== 'production' ? false : false,
         entities: ['dist/**/*.entity{.ts,.js}'],
+        migrations: [__dirname + '/migration/**/*{.ts,.js}'],
+        cli: {
+          migrationsDir: __dirname + '/migration/',
+        },
         logging: configService.get('NODE_ENV') !== 'production' ? true : false,
       }),
     }),
@@ -59,20 +69,26 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
         maxRedirects: configService.get<number>('HTTP_MAX_REDIRECTS', 5), // Maximum number of redirects to follow for outgoing HTTP requests
       }),
     }),
+    AuthModule,
     AlertModule,
     CoinmarketcapModule,
     CoingeckoModule,
-    OneinchModule,
     UsersModule,
     MailModule,
+    OrganizationModule,
+    SendpulseModule,
+    CareerModule,
+    ContactUsModule,
+    AffiliatePartnersModule,
+    HelpcenterModule,
+    StripeModule,
+    CrmModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: ThrottlerGuard,
-    // },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

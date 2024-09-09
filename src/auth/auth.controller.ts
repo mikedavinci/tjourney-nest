@@ -8,8 +8,12 @@ import { UserSignupDto } from './dto/user-signup.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { GoogleAuthGuard } from './guards/http-google-oath.guard';
 import { UserResponseDto } from 'src/users/dto/user-response.dto';
-import { RefreshJwtAuthGuard } from './guards/refresh-jwt-auth.guard';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { UserNewOnboardDto } from './dto/user-new-onboard';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { User } from 'src/users/entities/user.entity';
+import { RefreshJwtAuthGuard } from './guards/refresh-jwt-auth.guard';
 
 @ApiTags('Authentication')
 @ApiExcludeController()
@@ -19,14 +23,21 @@ export class AuthController {
 
   @Post('/sign-up')
   signUp(
-    @Body() userSignupDto: UserSignupDto,
+    @Body() userSignupDto: UserSignupDto
   ): Promise<{ statusCode: number; message: string; data?: UserResponseDto }> {
     return this.authService.signUp(userSignupDto);
   }
 
+  @Post('/onboard')
+  onboard(
+    @Body() useronboardDto: UserNewOnboardDto
+  ): Promise<{ statusCode: number; message: string; data?: UserResponseDto }> {
+    return this.authService.onboard(useronboardDto);
+  }
+
   @Post('/sign-in')
   signIn(
-    @Body() authCredentialsDto: AuthCredentialsDto,
+    @Body() authCredentialsDto: AuthCredentialsDto
   ): Promise<UserResponseDto> {
     return this.authService.signIn(authCredentialsDto);
   }
@@ -38,9 +49,87 @@ export class AuthController {
 
   @Post('/verify-email')
   async verifyEmail(
-    @Body() body: { email: string; token: string },
+    @Body() body: { email: string; token: string }
   ): Promise<any> {
     return this.authService.verifyEmail(body.email, body.token);
+  }
+
+  // @Post('refresh')
+  // async refreshSession(@CurrentUser() user: User) {
+  //   try {
+  //     if (!user) {
+  //       return {
+  //         statusCode: 401,
+  //         message: 'Invalid session',
+  //       };
+  //     }
+
+  //     const latestUser = await this.authService.findUserByEmail(user.email);
+  //     if (!latestUser) {
+  //       return {
+  //         statusCode: 404,
+  //         message: 'User not found',
+  //       };
+  //     }
+
+  //     const newToken = this.authService.generateJwt(latestUser);
+  //     console.log('newToken', newToken);
+  //     return {
+  //       statusCode: 200,
+  //       data: {
+  //         ...this.authService.getUserData(latestUser),
+  //         refreshToken: newToken,
+  //         refreshTokenExpiresAt: new Date(
+  //           Date.now() + 30 * 24 * 60 * 60 * 1000
+  //         ).toISOString(),
+  //       },
+  //     };
+  //   } catch (error) {
+  //     return {
+  //       statusCode: 500,
+  //       message: 'Server error',
+  //     };
+  //   }
+  // }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('session')
+  async getSession(@CurrentUser() user: User) {
+    if (!user) {
+      return {
+        statusCode: 401,
+        message: 'Invalid session',
+      };
+    }
+
+    const latestUser = await this.authService.findUserByEmail(user.email);
+    if (!latestUser) {
+      return {
+        statusCode: 404,
+        message: 'User not found',
+      };
+    }
+
+    return {
+      statusCode: 200,
+      data: this.authService.getUserData(latestUser),
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('user-information')
+  async getUserInformation(@CurrentUser() user: User) {
+    const latestUser = await this.authService.findUserById(user.id);
+    if (!latestUser) {
+      return {
+        statusCode: 404,
+        message: 'User not found',
+      };
+    }
+    return {
+      statusCode: 200,
+      data: this.authService.getUserData(latestUser),
+    };
   }
 
   @UseGuards(RefreshJwtAuthGuard)

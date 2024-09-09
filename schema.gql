@@ -5,19 +5,25 @@
 type User {
   id: ID!
   displayName: String
-  name: String
   email: String!
+  phone: String
   avatar: String
+  name: String
+  isOnboarded: Boolean!
+  sp_client_id: String
+  sp_client_secret: String
   password: String
   emailVerified: Boolean!
   token: String
   resetToken: String
   resetTokenExpiry: DateTime
-  createdDate: DateTime!
-  updatedDate: DateTime!
   isAdmin: Boolean!
   isAffiliate: Boolean!
   isProMember: Boolean!
+  country: String
+  agreedTOSPrivacy: Boolean!
+  createdDate: DateTime!
+  updatedDate: DateTime!
 }
 
 """

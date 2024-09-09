@@ -14,6 +14,7 @@ import { Repository } from 'typeorm';
 import { UserDetails } from 'src/users/utils/types';
 import { UserResponseDto } from 'src/users/dto/user-response.dto';
 import { addMinutes } from 'date-fns';
+import { UserNewOnboardDto } from './dto/user-new-onboard';
 @Injectable()
 export class AuthService {
   constructor(
@@ -21,11 +22,11 @@ export class AuthService {
     private userService: UserService,
     private jwtService: JwtService,
     private configService: ConfigService,
-    private mailService: MailService,
+    private mailService: MailService
   ) {}
 
   async signUp(
-    createUserDto: UserSignupDto,
+    createUserDto: UserSignupDto
   ): Promise<{ statusCode: number; message: string; data?: UserResponseDto }> {
     try {
       const user = await this.userService.create(createUserDto);
@@ -33,18 +34,10 @@ export class AuthService {
       // Send email verification
       await this.sendEmailVerification(user.email);
 
-      // Convert User entity to UserResponseDto
-      const userResponse = new UserResponseDto();
-      userResponse.id = user.id;
-      userResponse.email = user.email;
-      userResponse.displayName = user.displayName;
-      userResponse.name = user.name;
-      userResponse.emailVerified = user.emailVerified;
-
       return {
         statusCode: 201, // 201 for created
         message: 'An email has been sent to you. Please verify your account.',
-        data: userResponse,
+        // data: userResponse,
       };
     } catch (error) {
       console.error(error);
@@ -55,9 +48,39 @@ export class AuthService {
     }
   }
 
-  // TODO: SET A THROTTLE FOR THIS METHOD, MAXIMUM 2 EMAIL PER 60 MINUTES
+  async onboard(
+    onboardUserDto: UserNewOnboardDto
+  ): Promise<{ statusCode: number; message: string; data?: UserResponseDto }> {
+    try {
+      const user = await this.userService.onboard(onboardUserDto);
+
+      // Send email verification
+      await this.sendEmailVerification(user.email);
+
+      // Convert User entity to UserResponseDto
+      // const userResponse = new UserResponseDto();
+      // userResponse.id = user.id;
+      // userResponse.email = user.email;
+      // userResponse.displayName = user.displayName;
+      // userResponse.name = user.name;
+      // userResponse.emailVerified = user.emailVerified;
+
+      return {
+        statusCode: 201,
+        message: 'An email has been sent to you. Please verify your account.',
+        // data: userResponse,
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        statusCode: 500,
+        message: 'Failed to create user. Please try again.',
+      };
+    }
+  }
+
   async sendEmailVerification(
-    email: string,
+    email: string
   ): Promise<{ statusCode: number; message: string }> {
     const user = await this.userRepository.findOne({ where: { email } });
 
@@ -77,7 +100,7 @@ export class AuthService {
       user.token = token;
       await this.userRepository.save(user);
 
-      await this.mailService.sendVerificationEmail(user, token);
+      await this.mailService.sendVerificationEmailOnboard(user, token);
       return { statusCode: 200, message: 'Verification email sent.' };
     } catch (error) {
       console.error(error);
@@ -90,7 +113,7 @@ export class AuthService {
 
   async verifyEmail(
     email: string,
-    token: string,
+    token: string
   ): Promise<{ message: string; statusCode: number }> {
     try {
       const user = await this.userRepository.findOne({ where: { email } });
@@ -115,7 +138,9 @@ export class AuthService {
 
       user.emailVerified = true;
       user.token = null;
+      user.isOnboarded = true;
       await this.userRepository.save(user);
+      await this.mailService.welcomeNewUser(user);
       return { message: 'Email verified successfully!', statusCode: 200 }; // OK
     } catch (error) {
       console.error(error);
@@ -163,32 +188,41 @@ export class AuthService {
         sub: user.id,
       };
 
-      // access token
-      const accessTokenExpirationMinutes = 28800; // 8 hours
+      // access token 30 days in minutes
+      const accessTokenExpirationMinutes = 2592000; // 30 days in seconds 2592000
+      // 72 hours is 259200 seconds and 8 hours is 28800 seconds
       const accessToken: string = this.jwtService.sign(payload, {
         expiresIn: accessTokenExpirationMinutes,
       });
       const accessTokenExpiresAt = addMinutes(
         new Date(),
-        accessTokenExpirationMinutes / 60,
+        accessTokenExpirationMinutes / 60
       );
 
       // refresh token
-      const refreshTokenExpirationMinutes = 86400; // 24 hours
+      const refreshTokenExpirationMinutes = 2592000; // 30 days in seconds 2592000
       const refreshToken: string = this.jwtService.sign(payload, {
         expiresIn: refreshTokenExpirationMinutes,
       });
       const refreshTokenExpiresAt = addMinutes(
         new Date(),
-        refreshTokenExpirationMinutes / 60,
+        refreshTokenExpirationMinutes / 60
       );
 
       const userResponse = new UserResponseDto();
       userResponse.id = user.id;
-      userResponse.email = user.email;
-      userResponse.displayName = user.displayName;
       userResponse.name = user.name;
+      userResponse.displayName = user.displayName;
+      userResponse.email = user.email;
       userResponse.emailVerified = user.emailVerified;
+      userResponse.isOnboarded = user.isOnboarded;
+      userResponse.isProMember = user.isProMember;
+      userResponse.tempPlanSelected = user.tempPlanSelected;
+      userResponse.isAffiliate = user.isAffiliate;
+      userResponse.isAdmin = user.isAdmin;
+      userResponse.orgAssociated = user.orgAssociated;
+      userResponse.selectedPlan = user.selectedPlan;
+      userResponse.flowReady = user.flowReady;
 
       return {
         statusCode: 200,
@@ -209,6 +243,49 @@ export class AuthService {
     }
   }
 
+  async verifySessionToken(token: string): Promise<User | null> {
+    try {
+      const decoded = this.jwtService.verify<JwtPayload>(token);
+      const user = await this.userRepository.findOne({
+        where: { id: decoded.sub },
+      });
+      return user;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async findUserById(userId: number): Promise<User> {
+    return this.userRepository.findOne({ where: { id: userId } });
+  }
+
+  async findUserByEmail(email: string): Promise<User> {
+    return this.userRepository.findOne({ where: { email } });
+  }
+
+  generateJwt(user: User): string {
+    const payload: JwtPayload = { sub: user.id, email: user.email };
+    return this.jwtService.sign(payload, { expiresIn: '30d' }); // Assuming 30 days expiry
+  }
+
+  getUserData(user: User) {
+    return {
+      id: user.id,
+      name: user.name,
+      displayName: user.displayName,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      isOnboarded: user.isOnboarded,
+      isProMember: user.isProMember,
+      tempPlanSelected: user.tempPlanSelected,
+      isAffiliate: user.isAffiliate,
+      isAdmin: user.isAdmin,
+      orgAssociated: user.orgAssociated,
+      selectedPlan: user.selectedPlan,
+      flowReady: user.flowReady,
+    };
+  }
+
   async refreshToken(refreshToken: string): Promise<any> {
     try {
       // Verify and decode the refresh token
@@ -226,23 +303,27 @@ export class AuthService {
         email: decoded.email,
         sub: decoded.sub,
       };
-      const accessToken: string = this.jwtService.sign(payload, {
+      const token: string = this.jwtService.sign(payload, {
         secret: this.configService.get('JWT_SECRET'), // use your access token secret
-        expiresIn: 28800, // 8 hours
+        expiresIn: 2592000, // 30 days in seconds 2592000
       });
 
       return {
-        accessToken: accessToken,
+        refreshToken: token,
       };
     } catch (error) {
       // Handle the error when the refresh token is expired or invalid
       console.error(error.message);
-      return null; // or return { access_token: null };
+      return {
+        error: 'Invalid or expired refresh token',
+        statusCode: 500,
+        refreshToken: null,
+      };
     }
   }
 
   async sendResetPassword(
-    email: string,
+    email: string
   ): Promise<{ message: string; statusCode: number }> {
     const user = await this.userService.findOneByEmail(email);
 
@@ -295,7 +376,7 @@ export class AuthService {
   }
 
   async resetPassword(
-    dto: ResetPasswordDto,
+    dto: ResetPasswordDto
   ): Promise<{ statusCode: number; message: string }> {
     const user = await this.userService.findOneByEmail(dto.email);
 
@@ -314,7 +395,7 @@ export class AuthService {
     }
 
     const saltOrRounds = Number(
-      this.configService.get('SALT_ROUNDS') || process.env.SALT_ROUNDS,
+      this.configService.get('SALT_ROUNDS') || process.env.SALT_ROUNDS
     );
     user.password = await bcrypt.hash(dto.password, saltOrRounds);
     user.resetToken = null;
@@ -352,7 +433,6 @@ export class AuthService {
   }
 }
 
-// *** Previous Google Login Code ***
 // async googleLogin(user: GoogleLoginUserDto) {
 //   if (!user) {
 //     throw new UnauthorizedException('No user from google');

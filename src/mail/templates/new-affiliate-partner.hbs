@@ -1,0 +1,34 @@
+export const newAffiliatePartnerSignupEmail = (affiliatePartner:
+AffiliatePartner): string => { return `
+<html>
+  <head>
+    <style>
+      /* Add any necessary styles */
+    </style>
+  </head>
+  <body>
+    <h2>Welcome to the Affiliate Partner Program!</h2>
+    <p>Dear ${affiliatePartner.companyName},</p>
+    <p>Thank you for signing up as an Affiliate Partner. We are excited to have
+      you on board!</p>
+    <p>Your account details:</p>
+    <ul>
+      <li>Company Name: ${affiliatePartner.companyName}</li>
+      <li>Email: ${affiliatePartner.user.email}</li>
+      <li>Affiliate Code: ${affiliatePartner.affiliateCode}</li>
+    </ul>
+    <p>To get started, please follow these steps:</p>
+    <ol>
+      <li>Verify your email address by clicking on the verification link sent to
+        your email.</li>
+      <li>Log in to your affiliate partner dashboard using your email and
+        password.</li>
+      <li>Customize your affiliate links and promotional materials.</li>
+      <li>Start promoting our products/services to your audience.</li>
+    </ol>
+    <p>If you have any questions or need assistance, feel free to reach out to
+      our affiliate support team.</p>
+    <p>Best regards,<br />The Affiliate Partner Team</p>
+  </body>
+</html>
+`; };

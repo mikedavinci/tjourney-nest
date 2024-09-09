@@ -1,4 +1,4 @@
-import { IsEmail, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsNumber, IsString } from 'class-validator';
 
 export class UserResponseDto {
   @IsNumber()
@@ -8,9 +8,6 @@ export class UserResponseDto {
   @IsString()
   email: string;
 
-  // @IsString()
-  // avatar: string;
-
   @IsString()
   displayName: string;
 
@@ -18,5 +15,35 @@ export class UserResponseDto {
   name: string;
 
   @IsString()
+  phoneNumber: string;
+
+  @IsString()
+  country: string;
+
+  @IsBoolean()
   emailVerified: boolean;
+
+  @IsBoolean()
+  isOnboarded: boolean;
+
+  @IsBoolean()
+  isProMember: boolean;
+
+  @IsBoolean()
+  tempPlanSelected: boolean;
+
+  @IsBoolean()
+  isAffiliate: boolean;
+
+  @IsBoolean()
+  isAdmin: boolean;
+
+  @IsString()
+  selectedPlan: string;
+
+  @IsBoolean()
+  flowReady: boolean;
+
+  @IsBoolean()
+  orgAssociated: boolean;
 }

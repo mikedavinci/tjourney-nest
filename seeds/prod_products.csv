@@ -1,0 +1,22 @@
+name,internal_code,price,subscription,price_per_month,description,quantity,currency,stripeProductId,stripePriceId,payment_method_types,taxCode
+SMS Marketing Campaign,ta1,300,false,,"SMS marketing offers a direct and immediate channel to engage with your customers.",1,usd,prod_QBPu6vhs4UoNXZ,price_1PL358LVWGloaQg4R7KujlRE,card,txcd_20060055
+Social Media Campaign,ta2,300,false,,"Social Media Campaign",1,usd,prod_QBPumOKwNh15Pl,price_1PL34ELVWGloaQg4r2y9YZl8,card,txcd_20060055
+Email Marketing Campaign,ta3,500,false,,"From strategy development and audience segmentation, we handle every aspect of your email campaigns with precision and expertise.",1,usd,prod_QBPtCSDP2wLMeG,price_1PL33OLVWGloaQg4SqIKqW2g,card,txcd_20060055
+30 Second Video Creation,ta4,500,false,,"We turn your vision into a captivating 30-second video that tells your story and captivates your audience.",1,usd,prod_QBPXRq9Rg8lCP4,price_1PL2iYLVWGloaQg4KXEzhSBd,card,txcd_20060055
+30 Second Video Script,ta5,200,false,,"We transform your message into a captivating 30-second video script that grabs attention and sparks curiosity.",1,usd,prod_QBPVSrieyXLxz2,price_1PL2gxLVWGloaQg4WGeojFNi,card,txcd_20060055
+Knowledge Base Service,ta6,500,false,,"Our service involves curating, organizing, and structuring valuable content to address common queries, troubleshoot issues, and empower both customers and employees.",1,usd,prod_QBPU4ENRREgkCN,price_1PL2fRLVWGloaQg4SnnDrgS9,card,txcd_20060055
+Premium Content Creation,ta7,700,false,,"20 social media posts. Includes text + keywords+ 20 images or 30 second short video script",1,usd,prod_QBPT4s0RWg94z9,price_1PL2eSLVWGloaQg4SgLx1B8X,card,txcd_20060055
+Advanced Content Creation,ta8,500,false,,"15 social media posts. Includes text + keywords + images",1,usd,prod_QBPSAQhlupd1Fk,price_1PL2doLVWGloaQg4LRo44nV7,card,txcd_20060055
+Basic Content Creation,ta9,250,false,,"5 social media posts. Includes text + keywords + images",1,usd,prod_QBPOqHsL1TnNnz,price_1PL2a1LVWGloaQg4eerVscLi,card,txcd_20060055
+Payment Gateway Integration,ta10,500,false,,"Our solutions are tailored to your specific business needs, providing a hassle-free checkout experience and boosting your online sales. Trusted payment gateways such as PayPal, Stripe, and more.",1,usd,prod_QBPI7sxcTi0sNz,price_1PL2U0LVWGloaQg4WgCtTKhO,card,txcd_20060055
+Ignite Plan,tp1,299,true,299,"2,000 Contacts, 3 Automation Chat Flows, 2 Flow Enhancements, Facebook, Instagram, Whatsapp, Basic CRM: 5GB, Basic Support: 24h",1,usd,prod_Q2gB2wWaf7LnCA,price_1PCapKLVWGloaQg40BvGfeZn,card,txcd_20060055
+Ignite Plan Setup,tp1s,1000,false,,"Initial Setup Fee",1,usd,prod_Q2gDGrDTDxWN5u,price_1PCaqqLVWGloaQg4llCE1oxC,card,txcd_20060055
+Accelerate Plan,tp2,499,true,499,"10,000 Contacts, 5 Automation Chat Flows, 2 Transaction Payment Flows, 5 Flow Enhancements, Facebook, Instagram, Whatsapp, Live Chat, AI Powered CRM: 10GB, Advance Support: 8h, AI Powered using your Custom GPT",1,usd,prod_Q2gXTUuzNWKjRV,price_1PCbAYLVWGloaQg47BK1a87D,card,txcd_20060055
+Accelerate Plan Setup,tp2s,1500,false,,"Initial Setup Fee",1,usd,prod_Q2gZbWHiTx4Oq6,price_1PCbCJLVWGloaQg4vlNQoFAF,card,txcd_20060055
+Dominate Plan,tp3,999,true,999,"20,000 Contacts, 10 Automation Chat Flows, 5 Transaction Payment Flows, 10 Flow Enhancements, Facebook, Instagram, Whatsapp, Live Chat, AI Powered+ CRM: 30GB, Priority Support: 2h, 2 Email Campaigns, Custom AI Agent Large Language Model",1,usd,prod_Q2gcZOuCHiuzUy,price_1PCbEsLVWGloaQg4xgtsQZxl,card,txcd_20060055
+Dominate Plan Setup,tp3s,5000,false,,"Initial Setup Fee",1,usd,prod_Q2gcPs9Q5heoqp,price_1PCbFiLVWGloaQg4oWvrTFMm,card,txcd_20060055
+Basic Landing Page,ta11,350,false,,"1 Page + Dynamic Contact Form + SEO Optimization",1,usd,prod_Q2ggvlMUdag9Yb,price_1PCbIhLVWGloaQg4c54j4LQM,card,txcd_20060055
+Advanced Landing Page,ta12,750,false,,"5 Pages + Dynamic Contact Form + SEO Optimization + Live Chat",1,usd,prod_Q2gh8h8wcjEVP6,price_1PCbKLLVWGloaQg4G8rr7Ozy,card,txcd_20060055
+Premium Landing Page,ta13,1500,false,,"10 Pages + Dynamic Contact Form + SEO Optimization + Live Chat + Payment Gateway Integration",1,usd,prod_Q2gh8h8wcjEVP6,price_1PCbKLLVWGloaQg4G8rr7Ozy,card,txcd_20060055
+No Subscription Plan Setup,none,0,false,,"Initial Setup Fee",1,usd,prod_QBPw4oEk8Zo16X,price_1PL36sLVWGloaQg4E2g7UVrD,card,txcd_20060055
+No Subscription Plan,none,0,true,0,"No Subscription Plan",1,usd,prod_QBPwsf7JCelVoq,price_1PL36RLVWGloaQg4Ku1ThZ2d,card,txcd_20060055

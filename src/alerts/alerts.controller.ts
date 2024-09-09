@@ -20,8 +20,8 @@ import { CreateAlertDto } from './dto/create-alert.dto';
 import { Alert } from './entities/alerts.entity';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
-@ApiBearerAuth()
-@ApiTags('Alerts')
+// @ApiBearerAuth()
+// @ApiTags('Alerts')
 @Controller('alerts')
 export class AlertController {
   constructor(private readonly alertService: AlertService) {}
@@ -35,7 +35,7 @@ export class AlertController {
   })
   @ApiBody({ type: CreateAlertDto })
   async createAlert(
-    @Body(ValidationPipe) createAlertDto: CreateAlertDto,
+    @Body(ValidationPipe) createAlertDto: CreateAlertDto
   ): Promise<Alert> {
     return await this.alertService.saveAlertData(createAlertDto);
   }
@@ -60,13 +60,13 @@ export class AlertController {
     @Query('tf') tf?: string,
     @Query('alertType') alertType?: string,
     @Query('daysAgo') daysAgo?: number,
-    @Query('ticker') ticker?: string,
+    @Query('ticker') ticker?: string
   ): Promise<Alert[]> {
     return await this.alertService.getFilteredAlerts(
       tf,
       alertType,
       daysAgo,
-      ticker,
+      ticker
     );
   }
 }

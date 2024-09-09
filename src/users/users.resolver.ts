@@ -4,8 +4,9 @@ import { UserService } from './users.service';
 import { UserSignupDto } from 'src/auth/dto/user-signup.dto';
 import { GqlAuthGuard } from 'src/auth/guards/gql-auth-guard';
 import { UseGuards } from '@nestjs/common';
-import { CurrentUser } from 'src/auth/decorators/get-current-user.decorator';
+
 import { UpdateUserInput } from './dto/update-user.input';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 
 @Resolver(() => User)
 export class UserResolver {
@@ -26,7 +27,7 @@ export class UserResolver {
   @Query(() => User, { name: 'getUserByEmail' })
   findOne(
     @Args('email') email: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: any
   ): Promise<User> {
     return this.userService.findOneByEmail(email, user);
   }
@@ -41,7 +42,7 @@ export class UserResolver {
   @Mutation(() => User, { name: 'updateUser' })
   updateUser(
     @Args('updateUserInput') updateUserInput: UpdateUserInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: any
   ) {
     return this.userService.update(updateUserInput.id, updateUserInput, user);
   }

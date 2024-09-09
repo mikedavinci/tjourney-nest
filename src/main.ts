@@ -6,11 +6,15 @@ import {
   SwaggerDocumentOptions,
 } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
+import * as bodyParser from 'body-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionsFilter } from './common/filters';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule, {
+    cors: true,
+    bodyParser: false,
+  });
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
@@ -19,15 +23,28 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-    }),
+    })
   );
+  const rawBodyBuffer = (req, res, buffer, encoding) => {
+    if (!req.headers['stripe-signature']) {
+      return;
+    }
+
+    if (buffer && buffer.length) {
+      req.rawBody = buffer.toString(encoding || 'utf8');
+    }
+  };
+
+  app.use(bodyParser.urlencoded({ verify: rawBodyBuffer, extended: true }));
+  app.use(bodyParser.json({ verify: rawBodyBuffer }));
+
   app.useGlobalFilters(new AllExceptionsFilter());
   app.use(cookieParser());
   const config = new DocumentBuilder()
-    .setTitle('Trade Journey API')
-    .setDescription('The Trade Journey API')
+    .setTitle('PilotWizard.ai API')
+    .setDescription('The PilotWizard.ai API')
     .setVersion('1.0')
-    // .addTag('TradeJourney.ai')
+    // .addTag('PilotWizard.ai')
     .addBearerAuth()
     .build();
 

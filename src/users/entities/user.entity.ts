@@ -1,78 +1,120 @@
-import { Field, ObjectType, ID } from '@nestjs/graphql';
+import { Organization } from 'src/organization/entities/organization.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-// import { v4 as uuidv4 } from 'uuid';
+import { Plans } from '../plans.enum';
+import { AffiliatePartner } from 'src/affiliate_partners/entities/affiliate_partner.entity';
+import { Order } from 'src/stripe/entities/order.entity';
+import { Contact } from 'src/crm/entities/contact-status.entity';
+import { Deal } from 'src/crm/entities/deal.entity';
 
-@ObjectType()
 @Entity()
 export class User {
-  // Field of type ID is required for GraphQL
-  @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
   id: number;
 
-  @Field({ nullable: true })
   @Column({ nullable: true })
   displayName: string;
 
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  name: string;
-
-  @Field()
   @Column({ unique: true })
   email: string;
 
-  @Field({ nullable: true })
+  @Column({ nullable: true })
+  phoneNumber: string;
+
+  @Column({ nullable: true })
+  country: string;
+
   @Column({ nullable: true })
   avatar: string;
 
-  @Field({ nullable: true })
+  @Column({ nullable: true })
+  name: string;
+
+  @Column({ default: false })
+  isOnboarded: boolean;
+
+  @Column({ nullable: true })
+  sp_client_id: string;
+
+  @Column({ nullable: true })
+  sp_client_secret: string;
+
   @Column({ nullable: true })
   password: string;
 
-  @Field()
   @Column({ default: false })
   emailVerified: boolean;
 
-  @Field({ nullable: true })
   @Column({ nullable: true })
   token: string;
 
-  // @Field({ nullable: true })
-  // @Column({ nullable: true })
-  // tokenExpiry: Date;
-
-  @Field({ nullable: true })
   @Column({ nullable: true })
   resetToken: string;
 
-  @Field({ nullable: true })
   @Column({ nullable: true })
   resetTokenExpiry: Date;
 
-  @Field()
-  @CreateDateColumn({ type: 'timestamptz' })
-  createdDate: Date;
-
-  @Field()
-  @UpdateDateColumn({ type: 'timestamptz', nullable: true })
-  updatedDate: Date;
-
-  @Field()
   @Column({ default: false })
   isAdmin: boolean;
 
-  @Field()
   @Column({ default: false })
   isAffiliate: boolean;
 
-  @Field()
+  // @OneToOne(() => AffiliatePartner, (affiliatePartner) => affiliatePartner.user)
+  // affiliatePartner: AffiliatePartner;
+
   @Column({ default: false })
   isProMember: boolean;
+
+  @Column({ default: false })
+  tempPlanSelected: boolean;
+
+  @Column({ default: false })
+  flowReady: boolean;
+
+  @Column({ nullable: true })
+  selectedPlan: Plans;
+
+  @Column({ default: false })
+  orgAssociated: boolean;
+
+  @Column({ default: false })
+  agreedTOSPrivacy: boolean;
+
+  @Column('text', { array: true, nullable: true })
+  objectives: string[];
+
+  @Column({ nullable: true })
+  organizationId: number;
+
+  // @Column({ nullable: true })
+  // origin_source: string;
+
+  @ManyToOne(() => Organization, (organization) => organization.users)
+  @JoinColumn({ name: 'organizationId' })
+  organization: Organization;
+
+  @OneToMany(() => Order, (order) => order.user)
+  orders: Order[];
+
+  @OneToMany(() => Contact, (contact) => contact.user)
+  contacts: Contact[];
+
+  @OneToMany(() => Deal, (deal) => deal.user)
+  deals: Deal[];
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdDate: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz', nullable: true })
+  updatedDate: Date;
 }

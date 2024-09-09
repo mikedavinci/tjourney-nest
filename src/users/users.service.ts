@@ -13,6 +13,9 @@ import { ConfigService } from '@nestjs/config';
 import { UpdateUserInput } from './dto/update-user.input';
 import { HttpService } from '@nestjs/axios';
 import { UserResponseDto } from './dto/user-response.dto';
+import { UserNewOnboardDto } from 'src/auth/dto/user-new-onboard';
+import { Plans } from './plans.enum';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class UserService {
@@ -21,12 +24,13 @@ export class UserService {
     private userRepository: Repository<User>,
     private configService: ConfigService,
     private httpService: HttpService,
+    private mailService: MailService
   ) {}
 
   checkUserPermission(id: number, currentUser: any) {
     if (currentUser && id != currentUser.userId) {
       throw new UnauthorizedException(
-        'You do not have permission to access this user!',
+        'You do not have permission to access this user!'
       );
     }
   }
@@ -34,8 +38,47 @@ export class UserService {
   checkUserPermissionByEmail(email: string, currentUser: any) {
     if (currentUser && email != currentUser.email) {
       throw new UnauthorizedException(
-        'You do not have permission to access this user!',
+        'You do not have permission to access this user!'
       );
+    }
+  }
+
+  async onboard(onboardUserDto: UserNewOnboardDto): Promise<User> {
+    try {
+      // Check if the user already exists
+      const existingUser = await this.userRepository.findOne({
+        where: {
+          email: onboardUserDto.email,
+        },
+      });
+
+      if (existingUser) {
+        throw new ConflictException('User already exists');
+      }
+
+      // If user does not exist, proceed with creation
+      const saltOrRounds = Number(
+        this.configService.get('SALT_ROUNDS') || process.env.SALT_ROUNDS
+      );
+
+      onboardUserDto.password = await bcrypt.hash(
+        onboardUserDto.password,
+        saltOrRounds
+      );
+
+      onboardUserDto.agreedTOSPrivacy = true;
+
+      const user = this.userRepository.create(onboardUserDto);
+      const newUser = await this.userRepository.save(user);
+      await this.mailService.newUserSignedUp();
+
+      return newUser;
+
+      // this.sendSMSVerificationCode(newUser.user_id);
+    } catch (error) {
+      // Rethrow the error to be handled by NestJS's global exception filter
+      // or a controller-level exception filter.
+      throw error;
     }
   }
 
@@ -54,23 +97,19 @@ export class UserService {
 
       // If user does not exist, proceed with creation
       const saltOrRounds = Number(
-        this.configService.get('SALT_ROUNDS') || process.env.SALT_ROUNDS,
+        this.configService.get('SALT_ROUNDS') || process.env.SALT_ROUNDS
       );
 
       createUserDto.password = await bcrypt.hash(
         createUserDto.password,
-        saltOrRounds,
+        saltOrRounds
       );
+
+      createUserDto.agreedTOSPrivacy = true;
 
       const user = this.userRepository.create(createUserDto);
       const newUser = await this.userRepository.save(user);
-
-      const userResponse = new UserResponseDto();
-      userResponse.id = newUser.id;
-      userResponse.email = newUser.email;
-      userResponse.displayName = newUser.displayName;
-      userResponse.name = newUser.name;
-      userResponse.emailVerified = newUser.emailVerified;
+      await this.mailService.newUserSignedUp();
 
       return newUser;
 
@@ -130,7 +169,7 @@ export class UserService {
 
   async findOneByEmailWithRelations(
     email: string,
-    currentUser: any = null,
+    currentUser: any = null
   ): Promise<User> {
     this.checkUserPermissionByEmail(email, currentUser);
 
@@ -154,18 +193,18 @@ export class UserService {
   async update(
     id: number,
     updateUserInput: UpdateUserInput,
-    currentUser: any = null,
+    currentUser: any = null
   ) {
     this.checkUserPermission(id, currentUser);
 
     if (updateUserInput.password) {
       const saltOrRounds = Number(
-        this.configService.get('SALT_ROUNDS') || process.env.SALT_ROUNDS,
+        this.configService.get('SALT_ROUNDS') || process.env.SALT_ROUNDS
       );
 
       updateUserInput.password = await bcrypt.hash(
         updateUserInput.password,
-        saltOrRounds,
+        saltOrRounds
       );
     }
 

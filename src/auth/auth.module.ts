@@ -15,16 +15,16 @@ import { RefreshJwtStrategy } from './strategies/refresh-token.strategy';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
-    ConfigModule,
+    ConfigModule.forRoot({ isGlobal: true }), // Ensure ConfigModule is global
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get('JWT_SECRET') || process.env.JWT_SECRET,
-        // signOptions: {
-        //   expiresIn: configService.get('JWT_EXPIRATION_TIME'),
-        // },
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: '30d',
+        },
       }),
     }),
     UsersModule,

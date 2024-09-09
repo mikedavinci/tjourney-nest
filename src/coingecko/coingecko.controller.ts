@@ -23,8 +23,7 @@ import {
   CoinGeckoExchangesListParams,
 } from './interface.coingecko';
 
-@ApiBearerAuth()
-@ApiTags('CG Endpoints')
+// @ApiTags('CG Endpoints')
 @UseGuards(JwtAuthGuard)
 @Controller('cg')
 export class CoinGeckoController {
@@ -260,7 +259,7 @@ Data for Twitter, Telegram and Reddit will be updated on daily basis.
   })
   async getCoinData(
     @Param('id') id: string,
-    @Query() query: CoinGeckoCoinsByIdParams,
+    @Query() query: CoinGeckoCoinsByIdParams
   ) {
     return this.coinGeckoService.getCoinData(id, query);
   }
@@ -316,7 +315,7 @@ Data for Twitter, Telegram and Reddit will be updated on daily basis.
   })
   async getCoinOHLC(
     @Param('id') id: string,
-    @Query() query: CoinGeckoCoinOHLCParams,
+    @Query() query: CoinGeckoCoinOHLCParams
   ) {
     return this.coinGeckoService.getCoinOHLC(id, query);
   }
@@ -350,7 +349,7 @@ Data for Twitter, Telegram and Reddit will be updated on daily basis.
       'Valid values: market_cap_desc (default), market_cap_asc, name_desc, name_asc, market_cap_change_24h_desc and market_cap_change_24h_asc',
   })
   async getCategoriesWithMarketData(
-    @Query() params: CoinGeckoCategoriesParams,
+    @Query() params: CoinGeckoCategoriesParams
   ) {
     return this.coinGeckoService.getCategoriesWithMarketData(params);
   }
@@ -628,7 +627,7 @@ Data for Twitter, Telegram and Reddit will be updated on daily basis.
   })
   async getNFTMarketChart(
     @Param('id') id: string,
-    @Query() query: CoinGeckoNFTMarketChartParams,
+    @Query() query: CoinGeckoNFTMarketChartParams
   ) {
     return this.coinGeckoService.getNFTMarketChart(id, query);
   }
@@ -665,12 +664,12 @@ Data for Twitter, Telegram and Reddit will be updated on daily basis.
   async getNFTMarketChartByContractAddress(
     @Param('asset_platform_id') asset_platform_id: string,
     @Param('contract_address') contract_address: string,
-    @Query() query: CoinGeckoNFTMarketChartByContractAddressParams,
+    @Query() query: CoinGeckoNFTMarketChartByContractAddressParams
   ) {
     return this.coinGeckoService.getNFTMarketChartByContractAddress(
       asset_platform_id,
       contract_address,
-      query,
+      query
     );
   }
 
@@ -719,7 +718,7 @@ Data for Twitter, Telegram and Reddit will be updated on daily basis.
   async getExchangeVolumeInBTC(
     @Param('id') id: string,
     @Query('from') from: number,
-    @Query('to') to: number,
+    @Query('to') to: number
   ) {
     return this.coinGeckoService.getExchangeVolumeInBTC(id, from, to);
   }

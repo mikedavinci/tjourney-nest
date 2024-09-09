@@ -3,8 +3,8 @@ import { CoinmarketcapService } from './coinmarketcap.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-@ApiBearerAuth()
-@ApiTags('CM Endpoints')
+// @ApiBearerAuth()
+// @ApiTags('CM Endpoints')
 @UseGuards(JwtAuthGuard)
 @Controller('cm')
 export class CoinmarketcapController {
@@ -28,7 +28,7 @@ export class CoinmarketcapController {
   async getLatestListings(
     @Query('start') start: number,
     @Query('limit') limit: number,
-    @Query('sort') sort: string,
+    @Query('sort') sort: string
     // @Query('cryptocurrency_type') cryptocurrencyType: string,
     // @Query('tag') tag: string,
   ) {
@@ -47,7 +47,7 @@ export class CoinmarketcapController {
     @Query('symbol') symbol: string,
     @Query('time_start') time_start: string,
     @Query('time_end') time_end: string,
-    @Query('count') count: number,
+    @Query('count') count: number
   ) {
     return await this.coinmarketcapService.getOhlcvHistorical({
       symbol,
