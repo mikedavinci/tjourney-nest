@@ -1,6 +1,6 @@
 export interface CoinGeckoSimpleParams {
   ids: string;
-  vs_currencies: string;
+  vs_currencies?: string;
   include_market_cap?: boolean;
   include_24hr_vol?: boolean;
   include_24hr_change?: boolean;

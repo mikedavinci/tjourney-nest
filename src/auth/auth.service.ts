@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -15,15 +15,43 @@ import { UserDetails } from 'src/users/utils/types';
 import { UserResponseDto } from 'src/users/dto/user-response.dto';
 import { addMinutes } from 'date-fns';
 import { UserNewOnboardDto } from './dto/user-new-onboard';
+import { clerkClient } from '@clerk/clerk-sdk-node';
+import { isValidPhoneNumber } from 'libphonenumber-js';
+
+
+type ExtendedClerkClient = typeof clerkClient & {
+  signIns: {
+    create: (params: any) => Promise<any>;
+    prepareFirstFactor: (params: any) => Promise<any>;
+    attemptFirstFactor: (params: any) => Promise<{
+      status: string;
+      id: string;
+      createdSessionId: string;
+    }>;
+  };
+};
+
 @Injectable()
 export class AuthService {
+  private clerk: ExtendedClerkClient;
+
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private userService: UserService,
     private jwtService: JwtService,
     private configService: ConfigService,
-    private mailService: MailService
-  ) {}
+    private mailService: MailService,    
+  ) {
+    // Use type assertion to tell TypeScript that clerkClient has these additional properties
+    this.clerk = clerkClient as ExtendedClerkClient;
+  }
+
+  validatePhoneNumber(phoneNumber: string) {
+    if (!isValidPhoneNumber(phoneNumber)) {
+      return { isValid: false };
+    }
+    return { isValid: true, phoneNumber };
+  }
 
   async signUp(
     createUserDto: UserSignupDto
@@ -416,22 +444,73 @@ export class AuthService {
     return { statusCode: 200, message: 'Password reset successfully' }; // OK
   }
 
-  async validateGoogleUser(details: UserDetails) {
-    console.log('AuthService');
-    console.log(details);
-    const user = await this.userRepository.findOneBy({ email: details.email });
-    console.log(user);
-    if (user) return user;
-    console.log('User not found. Creating...');
-    const newUser = this.userRepository.create(details);
-    return this.userRepository.save(newUser);
-  }
+  // async validateGoogleUser(details: UserDetails) {
+  //   console.log('AuthService');
+  //   console.log(details);
+  //   const user = await this.userRepository.findOneBy({ email: details.email });
+  //   console.log(user);
+  //   if (user) return user;
+  //   console.log('User not found. Creating...');
+  //   const newUser = this.userRepository.create(details);
+  //   return this.userRepository.save(newUser);
+  // }
 
-  async findUser(id: number) {
-    const user = await this.userRepository.findOneBy({ id });
-    return user;
-  }
-}
+  // async findUser(id: number) {
+  //   const user = await this.userRepository.findOneBy({ id });
+  //   return user;
+  // }
+
+  // async startPhoneSignIn(phoneNumber: string) {
+  //   if (!isValidPhoneNumber(phoneNumber)) {
+  //     throw new BadRequestException('Invalid phone number');
+  //   }
+
+  //   try {
+  //     // Create a new phone number for the user
+  //     const newPhoneNumber = await clerkClient.phoneNumbers.create({
+  //       phoneNumber,
+  //       verified: false,
+  //     });
+
+  //     // Prepare verification
+  //     await newPhoneNumber.prepareVerification();
+
+  //     return {
+  //       phoneNumberId: newPhoneNumber.id,
+  //       message: 'Verification code sent to your phone.',
+  //     };
+  //   } catch (err) {
+  //     console.error('Clerk API error:', err);
+  //     if (err.errors && err.errors.length > 0) {
+  //       throw new BadRequestException(err.errors[0].message);
+  //     } else {
+  //       throw new BadRequestException('An error occurred during phone sign-in');
+  //     }
+  //   }
+  // }
+
+  // async verifyPhoneCode(phoneNumberId: string, code: string) {
+  //   try {
+  //     const phoneNumber = await clerkClient.phoneNumbers.getPhoneNumber(phoneNumberId);
+      
+  //     const verifiedPhoneNumber = await phoneNumber.prepareVerification({ code });
+
+  //     if (verifiedPhoneNumber.verification.status !== 'verified') {
+  //       throw new UnauthorizedException('Invalid verification code');
+  //     }
+
+  //     // Here you might want to create a session or return a token
+  //     // For now, we'll just return a success message
+  //     return {
+  //       message: 'Phone number verified successfully',
+  //       phoneNumber: verifiedPhoneNumber.phoneNumber,
+  //     };
+  //   } catch (error) {
+  //     console.error('Verification error:', error);
+  //     throw new UnauthorizedException('Invalid verification code');
+  //   }
+  // }
+
 
 // async googleLogin(user: GoogleLoginUserDto) {
 //   if (!user) {
@@ -507,3 +586,4 @@ export class AuthService {
 //     secret: this.configService.get('JWT_SECRET'),
 //   });
 // }
+}

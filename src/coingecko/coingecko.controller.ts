@@ -1,3 +1,4 @@
+// coingecko.controller.ts
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { CoinGeckoService } from './coingecko.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -6,6 +7,7 @@ import {
   ApiOperation,
   ApiParam,
   ApiQuery,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import {
@@ -22,9 +24,12 @@ import {
   CoinGeckoCoinOHLCParams,
   CoinGeckoExchangesListParams,
 } from './interface.coingecko';
+import { ClerkAuthGuard } from 'src/auth/guards/clerk-auth.guard';
+import { CoinGeckoSearchDto } from './dto/create-coingecko.dto';
 
-// @ApiTags('CG Endpoints')
-@UseGuards(JwtAuthGuard)
+@ApiTags('CG Endpoints')
+// @ApiBearerAuth()
+// @UseGuards(ClerkAuthGuard)
 @Controller('cg')
 export class CoinGeckoController {
   constructor(private readonly coinGeckoService: CoinGeckoService) {}
@@ -73,9 +78,8 @@ export class CoinGeckoController {
   @ApiQuery({
     name: 'vs_currencies',
     type: String,
-    required: true,
-    description:
-      'vs_currency of coins, comma-separated if querying more than 1 vs_currency',
+    required: false,
+    description: 'Comma-separated target currencies',
   })
   @ApiQuery({
     name: 'ids',
@@ -297,13 +301,13 @@ Data for Twitter, Telegram and Reddit will be updated on daily basis.
   @ApiQuery({
     name: 'days',
     type: String,
-    required: true,
-    description: 'Data up to number of days ago (1/7/14/30/90/180/365/max)',
+    required: false,
+    description: 'Data up to number of days ago (1/7/14/30/90/180)',
   })
   @ApiQuery({
     name: 'vs_currency',
     type: String,
-    required: true,
+    required: false,
     description: 'The target currency of market data (usd, eur, jpy, etc.)',
   })
   @ApiParam({
@@ -315,8 +319,17 @@ Data for Twitter, Telegram and Reddit will be updated on daily basis.
   })
   async getCoinOHLC(
     @Param('id') id: string,
-    @Query() query: CoinGeckoCoinOHLCParams
+    @Query('vs_currency') vs_currency: string = 'usd',
+    @Query('days') days: string = '180',
+    @Query('interval') interval: string = 'daily',
+    @Query('precision') precision: string = '2'
   ) {
+    const query: CoinGeckoCoinOHLCParams = {
+      vs_currency,
+      days,
+      interval,
+      precision,
+    };
     return this.coinGeckoService.getCoinOHLC(id, query);
   }
 
@@ -721,5 +734,28 @@ Data for Twitter, Telegram and Reddit will be updated on daily basis.
     @Query('to') to: number
   ) {
     return this.coinGeckoService.getExchangeVolumeInBTC(id, from, to);
+  }
+
+  @Get('search_query')
+  @ApiOperation({
+    summary: 'Search for coins, exchanges, markets, and other crypto data',
+    description: `Search for coins, exchanges, markets, and other crypto data, ordered by market cap. | Update Frequency: every 15 minute
+    `,
+  })
+  @ApiQuery({
+    name: 'query',
+    type: String,
+    required: true,
+    description: 'The crypto search query',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successful response',
+    type: CoinGeckoSearchDto,
+  })
+  async searchQuery(
+    @Query('query') query: string
+  ): Promise<CoinGeckoSearchDto> {
+    return this.coinGeckoService.searchQuery(query);
   }
 }

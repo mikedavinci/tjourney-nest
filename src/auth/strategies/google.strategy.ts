@@ -19,16 +19,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   }
 
   async validate(accessToken: string, refreshToken: string, profile: Profile) {
-    console.log(accessToken);
-    console.log(refreshToken);
-    console.log(profile);
-    const user = await this.authService.validateGoogleUser({
-      email: profile.emails[0].value,
-      displayName: profile.displayName,
-    });
-    console.log('Validate');
-    console.log(user);
-    return user || null;
+    // console.log(accessToken);
+    // console.log(refreshToken);
+    // console.log(profile);
+    // const user = await this.authService.validateGoogleUser({
+    //   email: profile.emails[0].value,
+    //   displayName: profile.displayName,
+    // });
+    // console.log('Validate');
+    // console.log(user);
+    // return user || null;
   }
 }
 

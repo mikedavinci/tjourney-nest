@@ -13,7 +13,7 @@ export default new DataSource({
   type: 'postgres',
   // 'postgres://mickey:NoMames24!aA@159.65.175.175:5432/ptwd'
   // 'postgres://mickeyprod:NoMames24!aA@159.65.175.175:5432/pwprod'
-  url: 'postgres://mickey:NoMames24!aA@159.65.175.175:5432/ptwd',
+  url: 'postgres://mickey:NoMames24!aA@159.65.175.175:5432/tjbe',
   // process.env.NODE_ENV !== 'production'
   //   ? process.env.DO_DATABASE_URL
   //   : process.env.PROD_DATABASE_URL,

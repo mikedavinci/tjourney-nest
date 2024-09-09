@@ -18,10 +18,10 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
     credentialsDto.email = email;
     credentialsDto.password = password;
 
-    const user = await this.authService.validateUser(credentialsDto);
-    if (!user) {
-      throw new UnauthorizedException('Please check your login credentials');
-    }
-    return user;
+    // const user = await this.authService.validateUser(credentialsDto);
+    // if (!user) {
+    //   throw new UnauthorizedException('Please check your login credentials');
+    // }
+    // return user;
   }
 }

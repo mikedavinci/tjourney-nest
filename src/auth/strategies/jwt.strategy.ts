@@ -1,32 +1,36 @@
-import { ExtractJwt, Strategy } from 'passport-jwt';
+// src/authentication/jwt.strategy.ts
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { passportJwtSecret } from 'jwks-rsa';
+import * as dotenv from 'dotenv';
 import { ConfigService } from '@nestjs/config';
-import { JwtPayload } from '../../users/utils/jwt-payload.interface';
-import { UserService } from 'src/users/users.service';
+
+dotenv.config();
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly userService: UserService
-  ) {
+  constructor(private configService: ConfigService) {
     super({
+      secretOrKeyProvider: passportJwtSecret({
+        cache: true,
+        rateLimit: true,
+        jwksRequestsPerMinute: 5,
+        jwksUri: `${configService.get(
+          'CLERK_ISSUER_URL',
+        )}/.well-known/jwks.json`,
+      }),
+
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey:
-        configService.get<string>('JWT_SECRET') || process.env.JWT_SECRET,
+      issuer: `${configService.get('CLERK_ISSUER_URL')}`,
+      algorithms: ['RS256'],
     });
+    console.log('JwtStrategy initialized');
   }
 
-  async validate(payload: JwtPayload) {
-    const { email, sub } = payload;
-    const user = await this.userService.findOneByEmail(email);
-
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    return { userId: sub, email: email };
+  validate(payload: unknown): unknown {
+    // This one is really useful to check the jwt payload!
+    // console.log('Validating payload:', payload);
+    return payload;
   }
 }

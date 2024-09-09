@@ -41,8 +41,8 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.use(cookieParser());
   const config = new DocumentBuilder()
-    .setTitle('PilotWizard.ai API')
-    .setDescription('The PilotWizard.ai API')
+    .setTitle('TradeJourney.ai API')
+    .setDescription('The TradeJourney.ai API')
     .setVersion('1.0')
     // .addTag('PilotWizard.ai')
     .addBearerAuth()

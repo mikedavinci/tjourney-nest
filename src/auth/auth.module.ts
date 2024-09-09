@@ -11,27 +11,28 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategies/local-strategy';
 import { RefreshJwtStrategy } from './strategies/refresh-token.strategy';
+import { ClerkAuthGuard } from './guards/clerk-auth.guard';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     ConfigModule.forRoot({ isGlobal: true }), // Ensure ConfigModule is global
-    PassportModule.register({ defaultStrategy: 'jwt' }),
+    // PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: {
-          expiresIn: '30d',
-        },
+        // secret: configService.get<string>('JWT_SECRET'),
+        // signOptions: {
+        //   expiresIn: '30d',
+        // },
       }),
     }),
     UsersModule,
     MailModule,
   ],
-  providers: [AuthService, JwtStrategy, LocalStrategy, RefreshJwtStrategy],
+  providers: [AuthService, JwtStrategy, ClerkAuthGuard],
   controllers: [AuthController],
-  exports: [JwtStrategy, RefreshJwtStrategy, LocalStrategy, PassportModule],
+  exports: [ ClerkAuthGuard],
 })
 export class AuthModule {}

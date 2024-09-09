@@ -18,6 +18,10 @@ import { HelpcenterModule } from './helpcenter/helpcenter.module';
 import { StripeModule } from './stripe/stripe.module';
 import { AlertModule } from './alerts/alerts.module';
 import { CrmModule } from './crm/crm.module';
+import { ClerkModule } from './clerk/clerk.module';
+import { PolygonModule } from './polygon/polygon.module';
+import { RapidapiModule } from './rapidapi/rapidapi.module';
+import { TwelvedataModule } from './twelvedata/twelvedata.module';
 
 @Module({
   imports: [
@@ -35,8 +39,8 @@ import { CrmModule } from './crm/crm.module';
         ConfigModule,
         ThrottlerModule.forRoot([
           {
-            ttl: 60, // Time-to-live (in seconds) for the request count for 60 seconds
-            limit: 10, // Max # of requests per user within the ttl durationsxs
+            ttl: 30, // Time-to-live (in seconds) for the request count for 60 seconds
+            limit: 1000, // Max # of requests per user within the ttl durationsxs
           },
         ]),
       ],
@@ -44,12 +48,12 @@ import { CrmModule } from './crm/crm.module';
       useFactory: async (configService: ConfigService) => ({
         type: 'postgres',
         autoLoadEntities: true,
-        url: 'postgres://mickey:NoMames24!aA@159.65.175.175:5432/ptwd',
+        url: 'postgres://mickey:NoMames24!aA@159.65.175.175:5432/tjbe',
         // process.env.NODE_ENV !== 'production'
         //   ? process.env.DO_DATABASE_URL
         //   : process.env.PROD_DATABASE_URL,
         synchronize:
-          configService.get('NODE_ENV') !== 'production' ? false : false,
+          configService.get('NODE_ENV') !== 'production' ? true : false,
         entities: ['dist/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/migration/**/*{.ts,.js}'],
         cli: {
@@ -83,6 +87,10 @@ import { CrmModule } from './crm/crm.module';
     HelpcenterModule,
     StripeModule,
     CrmModule,
+    ClerkModule,
+    PolygonModule,
+    RapidapiModule,
+    TwelvedataModule,
   ],
   providers: [
     {

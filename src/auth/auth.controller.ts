@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Request } from 'express';
 
@@ -14,6 +14,9 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { User } from 'src/users/entities/user.entity';
 import { RefreshJwtAuthGuard } from './guards/refresh-jwt-auth.guard';
+import { LoginDto } from './dto/login.dto';
+import { StartPhoneLoginDto } from './dto/start-phone-login.dto';
+import { VerifyPhoneCodeDto } from './dto/verify-phone-code.dto';
 
 @ApiTags('Authentication')
 @ApiExcludeController()
@@ -54,6 +57,29 @@ export class AuthController {
     return this.authService.verifyEmail(body.email, body.token);
   }
 
+  // @Post('start-phone-signin')
+  // async startPhoneSignIn(
+  //   @Body('phoneNumber') phoneNumber: string,
+  //   @Req() request: Request,
+  // ) {
+  //   console.log('Full request:', JSON.stringify(request.body, null, 2));
+  //   if (!phoneNumber) {
+  //     throw new BadRequestException('Phone number is required');
+  //   }
+  //   return this.authService.startPhoneSignIn(phoneNumber);
+  // }
+
+  // @Post('verify-phone-code')
+  //   async verifyPhoneCode(
+  //     @Body('signInId') signInId: string,
+  //     @Body('code') code: string,
+  //   ) {
+  //     if (!signInId || !code) {
+  //       throw new BadRequestException('Sign-in ID and verification code are required');
+  //     }
+  //     return this.authService.verifyPhoneCode(signInId, code);
+  //   }
+
   // @Post('refresh')
   // async refreshSession(@CurrentUser() user: User) {
   //   try {
@@ -92,84 +118,84 @@ export class AuthController {
   //   }
   // }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('session')
-  async getSession(@CurrentUser() user: User) {
-    if (!user) {
-      return {
-        statusCode: 401,
-        message: 'Invalid session',
-      };
-    }
+  // @UseGuards(JwtAuthGuard)
+  // @Get('session')
+  // async getSession(@CurrentUser() user: User) {
+  //   if (!user) {
+  //     return {
+  //       statusCode: 401,
+  //       message: 'Invalid session',
+  //     };
+  //   }
 
-    const latestUser = await this.authService.findUserByEmail(user.email);
-    if (!latestUser) {
-      return {
-        statusCode: 404,
-        message: 'User not found',
-      };
-    }
+  //   const latestUser = await this.authService.findUserByEmail(user.email);
+  //   if (!latestUser) {
+  //     return {
+  //       statusCode: 404,
+  //       message: 'User not found',
+  //     };
+  //   }
 
-    return {
-      statusCode: 200,
-      data: this.authService.getUserData(latestUser),
-    };
-  }
+  //   return {
+  //     statusCode: 200,
+  //     data: this.authService.getUserData(latestUser),
+  //   };
+  // }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('user-information')
-  async getUserInformation(@CurrentUser() user: User) {
-    const latestUser = await this.authService.findUserById(user.id);
-    if (!latestUser) {
-      return {
-        statusCode: 404,
-        message: 'User not found',
-      };
-    }
-    return {
-      statusCode: 200,
-      data: this.authService.getUserData(latestUser),
-    };
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Get('user-information')
+  // async getUserInformation(@CurrentUser() user: User) {
+  //   const latestUser = await this.authService.findUserById(user.id);
+  //   if (!latestUser) {
+  //     return {
+  //       statusCode: 404,
+  //       message: 'User not found',
+  //     };
+  //   }
+  //   return {
+  //     statusCode: 200,
+  //     data: this.authService.getUserData(latestUser),
+  //   };
+  // }
 
-  @UseGuards(RefreshJwtAuthGuard)
-  @Post('/refresh')
-  refreshToken(@Req() request: Request): Promise<any> {
-    return this.authService.refreshToken(request.body.refresh);
-  }
+  // @UseGuards(RefreshJwtAuthGuard)
+  // @Post('/refresh')
+  // refreshToken(@Req() request: Request): Promise<any> {
+  //   return this.authService.refreshToken(request.body.refresh);
+  // }
 
-  @Post('/send-reset-password')
-  sendResetPassword(@Body() body: SendResetPasswordDto): Promise<any> {
-    return this.authService.sendResetPassword(body.email);
-  }
+  // @Post('/send-reset-password')
+  // sendResetPassword(@Body() body: SendResetPasswordDto): Promise<any> {
+  //   return this.authService.sendResetPassword(body.email);
+  // }
 
-  @Post('/reset-password')
-  resetPassword(@Body() body: ResetPasswordDto): Promise<any> {
-    return this.authService.resetPassword(body);
-  }
+  // @Post('/reset-password')
+  // resetPassword(@Body() body: ResetPasswordDto): Promise<any> {
+  //   return this.authService.resetPassword(body);
+  // }
 
-  @Get('google/login')
-  @UseGuards(GoogleAuthGuard)
-  handleLogin() {
-    return { msg: 'Google Authentication' };
-  }
+  // @Get('google/login')
+  // @UseGuards(GoogleAuthGuard)
+  // handleLogin() {
+  //   return { msg: 'Google Authentication' };
+  // }
 
-  // api/auth/google/redirect
-  @Get('google/redirect')
-  @UseGuards(GoogleAuthGuard)
-  handleRedirect() {
-    return { msg: 'OK' };
-  }
+  // // api/auth/google/redirect
+  // @Get('google/redirect')
+  // @UseGuards(GoogleAuthGuard)
+  // handleRedirect() {
+  //   return { msg: 'OK' };
+  // }
 
-  @Get('status')
-  user(@Req() request: Request) {
-    console.log(request.user);
-    if (request.user) {
-      return { msg: 'Authenticated' };
-    } else {
-      return { msg: 'Not Authenticated' };
-    }
-  }
+  // @Get('status')
+  // user(@Req() request: Request) {
+  //   console.log(request.user);
+  //   if (request.user) {
+  //     return { msg: 'Authenticated' };
+  //   } else {
+  //     return { msg: 'Not Authenticated' };
+  //   }
+  // }
 
   // ********** GOOGLE AUTH **********
   // @SetMetadata('google-login', true)
