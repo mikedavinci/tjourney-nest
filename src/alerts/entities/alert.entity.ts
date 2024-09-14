@@ -28,7 +28,7 @@ export class Alert {
   @Column('jsonb', { nullable: false, default: {} })
   alert_data: AlertData;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, default: false })
   isStocksAlert: boolean;
 
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })

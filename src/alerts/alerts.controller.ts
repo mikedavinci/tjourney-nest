@@ -108,9 +108,8 @@ export class AlertController {
     @Query('sortOrder') sortOrder: 'ASC' | 'DESC' = 'DESC'
   ): Promise<{ alerts: Alert[]; total: number }> {
     try {
-      page = Math.max(1, page); // Ensure page is at least 1
-      // Ensure limit is between 1 and 100
-      return await this.alertService.getFilteredAlerts(
+      page = Math.max(1, page);
+      const result = await this.alertService.getFilteredAlerts(
         tf,
         alertType,
         daysAgo,
@@ -120,6 +119,17 @@ export class AlertController {
         sortBy,
         sortOrder
       );
+
+      // Transform the result to include isStocksAlert
+      const transformedAlerts = result.alerts.map((alert) => ({
+        ...alert,
+        isStocksAlert: alert.isStocksAlert,
+      }));
+
+      return {
+        alerts: transformedAlerts,
+        total: result.total,
+      };
     } catch (error) {
       console.error('Error fetching filtered alerts:', error);
       throw new HttpException(
