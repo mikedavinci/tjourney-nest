@@ -141,6 +141,8 @@ export class AlertController {
         isForexAlert: alert.isForexAlert,
       }));
 
+      // console.log('transformedAlerts', transformedAlerts);
+
       return {
         alerts: transformedAlerts,
         total: result.total,

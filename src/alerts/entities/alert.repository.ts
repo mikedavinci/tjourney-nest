@@ -15,20 +15,22 @@ export class AlertRepository extends Repository<Alert> {
     daysAgo?: number,
     ticker?: string,
     page: number = 1,
-    limit: number = 500,
+    limit: number = 200,
     sortBy: string = 'createdAt',
     sortOrder: 'ASC' | 'DESC' = 'DESC'
   ): Promise<{ alerts: Alert[]; total: number }> {
-    const query = this.createQueryBuilder('alert')
-      .select('alert.id', 'id')
-      .addSelect('alert.createdAt', 'createdAt')
-      .addSelect('alert.ticker', 'ticker')
-      .addSelect('alert.tf', 'tf')
-      .addSelect('alert.alert', 'alert')
-      .addSelect('alert.ohlcv', 'ohlcv')
-      .addSelect('alert.bartime', 'bartime')
-      .addSelect('alert.isStocksAlert', 'isStocksAlert')
-      .addSelect('alert.isForexAlert', 'isForexAlert');
+    // const query = this.createQueryBuilder('alert')
+    //   .select('alert.id', 'id')
+    //   .addSelect('alert.createdAt', 'createdAt')
+    //   .addSelect('alert.ticker', 'ticker')
+    //   .addSelect('alert.tf', 'tf')
+    //   .addSelect('alert.alert', 'alert')
+    //   .addSelect('alert.ohlcv', 'ohlcv')
+    //   .addSelect('alert.bartime', 'bartime')
+    //   .addSelect('alert.isStocksAlert', 'isStocksAlert')
+    //   .addSelect('alert.isForexAlert', 'isForexAlert');
+
+    const query = this.createQueryBuilder('alert');
 
     if (tf) {
       query.andWhere('alert.tf = :tf', { tf });
@@ -63,8 +65,12 @@ export class AlertRepository extends Repository<Alert> {
       .skip((page - 1) * limit)
       .take(limit);
 
+    // console.log('Query:', query.getQuery());
+    // console.log('Parameters:', query.getParameters());
+
     const [alerts, total] = await query.getManyAndCount();
-  
+    console.log('Alerts found:', alerts.length);
+    console.log('Total:', total);
     return { alerts, total };
   }
 
