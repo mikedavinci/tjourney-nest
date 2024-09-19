@@ -19,50 +19,52 @@ export class AlertRepository extends Repository<Alert> {
     sortBy: string = 'createdAt',
     sortOrder: 'ASC' | 'DESC' = 'DESC'
   ): Promise<{ alerts: Alert[]; total: number }> {
-    const subQuery = this.createQueryBuilder('alert')
+    const query = this.createQueryBuilder('alert')
       .select('alert.id', 'id')
       .addSelect('alert.createdAt', 'createdAt')
-      .addSelect("alert.alert_data->>'ticker'", 'ticker')
+      .addSelect('alert.ticker', 'ticker')
+      .addSelect('alert.tf', 'tf')
+      .addSelect('alert.alert', 'alert')
+      .addSelect('alert.ohlcv', 'ohlcv')
+      .addSelect('alert.bartime', 'bartime')
       .addSelect('alert.isStocksAlert', 'isStocksAlert')
-      .addSelect('alert.isForexAlert', 'isForexAlert')
-      .orderBy("alert.alert_data->>'ticker'")
-      .addOrderBy('alert.createdAt', 'DESC');
+      .addSelect('alert.isForexAlert', 'isForexAlert');
 
     if (tf) {
-      subQuery.andWhere("alert.alert_data->>'tf' = :tf", { tf });
+      query.andWhere('alert.tf = :tf', { tf });
     }
     if (alertType) {
-      subQuery.andWhere("alert.alert_data->>'alert' ILIKE :alertType", {
+      query.andWhere('alert.alert ILIKE :alertType', {
         alertType: `%${alertType}%`,
       });
     }
     if (daysAgo && daysAgo > 0) {
       const dateLimit = moment().subtract(daysAgo, 'days').toDate();
-      subQuery.andWhere('alert.createdAt > :dateLimit', { dateLimit });
+      query.andWhere('alert.createdAt > :dateLimit', { dateLimit });
     }
     if (ticker) {
-      subQuery.andWhere("alert.alert_data->>'ticker' = :ticker", { ticker });
+      query.andWhere('alert.ticker = :ticker', { ticker });
     }
 
-    const validSortColumns = ['createdAt', 'updatedAt', 'id'];
+    const validSortColumns = [
+      'createdAt',
+      'updatedAt',
+      'id',
+      'tf',
+      'ticker',
+      'bartime',
+    ];
     if (!validSortColumns.includes(sortBy)) {
       sortBy = 'createdAt';
     }
 
-    const query = this.createQueryBuilder('alert')
-      .innerJoin(
-        `(SELECT DISTINCT ON (subq.ticker) * 
-          FROM (${subQuery.getQuery()}) as subq)`,
-        'latest',
-        'alert.id = latest.id'
-      )
-      .setParameters(subQuery.getParameters())
+    query
       .orderBy(`alert.${sortBy}`, sortOrder)
       .skip((page - 1) * limit)
       .take(limit);
 
     const [alerts, total] = await query.getManyAndCount();
-
+  
     return { alerts, total };
   }
 
