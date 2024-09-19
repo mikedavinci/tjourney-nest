@@ -59,7 +59,7 @@ export class AlertController {
   async createStocksAlert(
     @Body(ValidationPipe) createAlertDto: CreateAlertDto
   ): Promise<Alert> {
-    return await this.alertService.saveAlertData(createAlertDto);
+    return await this.alertService.saveStockAlertData(createAlertDto);
   }
 
   @Post('create-alert-forex')
@@ -73,7 +73,7 @@ export class AlertController {
   async createForexAlert(
     @Body(ValidationPipe) createAlertDto: CreateAlertDto
   ): Promise<Alert> {
-    return await this.alertService.saveAlertData(createAlertDto);
+    return await this.alertService.saveForexAlertData(createAlertDto);
   }
 
   @Get()

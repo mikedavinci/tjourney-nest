@@ -37,8 +37,28 @@ export class AlertService {
   async saveAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
     const alert = this.alertRepository.create({
       ...createAlertDto,
-      isStocksAlert: createAlertDto.isStocksAlert || false,
-      isForexAlert: createAlertDto.isForexAlert || false,
+      isStocksAlert: false,
+      isForexAlert: false,
+    });
+  
+    return await this.alertRepository.save(alert);
+  }
+
+  async saveForexAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
+    const alert = this.alertRepository.create({
+      ...createAlertDto,
+      isStocksAlert: false,
+      isForexAlert: true,
+    });
+  
+    return await this.alertRepository.save(alert);
+  }
+
+  async saveStockAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
+    const alert = this.alertRepository.create({
+      ...createAlertDto,
+      isStocksAlert: true,
+      isForexAlert: false,
     });
 
     return await this.alertRepository.save(alert);
