@@ -1,12 +1,11 @@
-// DTO
 import {
   IsNotEmpty,
   IsNumber,
   IsObject,
   IsString,
-  ValidateNested,
+  IsBoolean,
+  IsOptional,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
 class OhlcvDto {
   @IsNumber()
@@ -28,23 +27,29 @@ class OhlcvDto {
 export class CreateAlertDto {
   @IsNotEmpty()
   @IsString()
+  tf: string;
+
+  @IsNotEmpty()
+  @IsString()
   alert: string;
+
+  @IsNotEmpty()
+  @IsObject()
+  ohlcv: OhlcvDto;
 
   @IsNotEmpty()
   @IsString()
   ticker: string;
 
   @IsNotEmpty()
-  @IsString()
-  tf: string;
-
-  @IsNotEmpty()
-  @IsObject()
-  @ValidateNested()
-  @Type(() => OhlcvDto)
-  ohlcv: OhlcvDto;
-
-  @IsNotEmpty()
   @IsNumber()
   bartime: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isStocksAlert?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isForexAlert?: boolean;
 }

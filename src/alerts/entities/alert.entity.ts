@@ -25,13 +25,31 @@ export class Alert {
   @PrimaryGeneratedColumn('uuid')
   id: string | undefined;
 
-  @Column('jsonb', { nullable: false, default: {} })
-  alert_data: AlertData;
+  @Column()
+  tf: string;
 
-  @Column({ nullable: true, default: false })
+  @Column()
+  alert: string;
+
+  @Column('jsonb')
+  ohlcv: {
+    low: number;
+    high: number;
+    open: number;
+    close: number;
+    volume: number;
+  };
+
+  @Column()
+  ticker: string;
+
+  @Column('bigint')
+  bartime: number;
+
+  @Column({ default: false })
   isStocksAlert: boolean;
 
-  @Column({ nullable: true, default: false })
+  @Column({ default: false })
   isForexAlert: boolean;
 
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })

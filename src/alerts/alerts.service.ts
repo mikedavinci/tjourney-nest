@@ -13,70 +13,80 @@ export class AlertService {
     private alertRepository: AlertRepository
   ) {}
 
+  // async saveAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
+  //   // Convert CreateAlertDto to a JSON string
+  //   const alertDataString = JSON.stringify(createAlertDto);
+
+  //   // Parse the JSON string back to an object (if needed)
+  //   let parsedData: CreateAlertDto;
+  //   try {
+  //     parsedData = JSON.parse(alertDataString);
+  //   } catch (error) {
+  //     throw new Error('Invalid JSON format');
+  //   }
+
+  //   // Create a new alert with the parsed data
+  //   const alert = this.alertRepository.create({
+  //     alert_data: parsedData,
+  //   });
+
+  //   // Save the alert in the database
+  //   return await this.alertRepository.save(alert);
+  // }
+
   async saveAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
-    // Convert CreateAlertDto to a JSON string
-    const alertDataString = JSON.stringify(createAlertDto);
-
-    // Parse the JSON string back to an object (if needed)
-    let parsedData: CreateAlertDto;
-    try {
-      parsedData = JSON.parse(alertDataString);
-    } catch (error) {
-      throw new Error('Invalid JSON format');
-    }
-
-    // Create a new alert with the parsed data
     const alert = this.alertRepository.create({
-      alert_data: parsedData,
+      ...createAlertDto,
+      isStocksAlert: createAlertDto.isStocksAlert || false,
+      isForexAlert: createAlertDto.isForexAlert || false,
     });
 
-    // Save the alert in the database
     return await this.alertRepository.save(alert);
   }
 
-  async saveStocksAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
-    // Convert CreateAlertDto to a JSON string
-    const alertDataString = JSON.stringify(createAlertDto);
+  // async saveStocksAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
+  //   // Convert CreateAlertDto to a JSON string
+  //   const alertDataString = JSON.stringify(createAlertDto);
 
-    // Parse the JSON string back to an object (if needed)
-    let parsedData: CreateAlertDto;
-    try {
-      parsedData = JSON.parse(alertDataString);
-    } catch (error) {
-      throw new Error('Invalid JSON format');
-    }
+  //   // Parse the JSON string back to an object (if needed)
+  //   let parsedData: CreateAlertDto;
+  //   try {
+  //     parsedData = JSON.parse(alertDataString);
+  //   } catch (error) {
+  //     throw new Error('Invalid JSON format');
+  //   }
 
-    // Create a new alert with the parsed data
-    const alert = this.alertRepository.create({
-      alert_data: parsedData,
-      isStocksAlert: true,
-    });
+  //   // Create a new alert with the parsed data
+  //   const alert = this.alertRepository.create({
+  //     alert_data: parsedData,
+  //     isStocksAlert: true,
+  //   });
 
-    // Save the alert in the database
-    return await this.alertRepository.save(alert);
-  }
+  //   // Save the alert in the database
+  //   return await this.alertRepository.save(alert);
+  // }
 
-  async saveForexAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
-    // Convert CreateAlertDto to a JSON string
-    const alertDataString = JSON.stringify(createAlertDto);
+  // async saveForexAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
+  //   // Convert CreateAlertDto to a JSON string
+  //   const alertDataString = JSON.stringify(createAlertDto);
 
-    // Parse the JSON string back to an object (if needed)
-    let parsedData: CreateAlertDto;
-    try {
-      parsedData = JSON.parse(alertDataString);
-    } catch (error) {
-      throw new Error('Invalid JSON format');
-    }
+  //   // Parse the JSON string back to an object (if needed)
+  //   let parsedData: CreateAlertDto;
+  //   try {
+  //     parsedData = JSON.parse(alertDataString);
+  //   } catch (error) {
+  //     throw new Error('Invalid JSON format');
+  //   }
 
-    // Create a new alert with the parsed data
-    const alert = this.alertRepository.create({
-      alert_data: parsedData,
-      isStocksAlert: true,
-    });
+  //   // Create a new alert with the parsed data
+  //   const alert = this.alertRepository.create({
+  //     alert_data: parsedData,
+  //     isForexAlert: true,
+  //   });
 
-    // Save the alert in the database
-    return await this.alertRepository.save(alert);
-  }
+  //   // Save the alert in the database
+  //   return await this.alertRepository.save(alert);
+  // }
 
   async getAllAlerts(
     page: number = 1,
