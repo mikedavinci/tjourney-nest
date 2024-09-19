@@ -24,6 +24,7 @@ export class AlertRepository extends Repository<Alert> {
       .addSelect('alert.createdAt', 'createdAt')
       .addSelect("alert.alert_data->>'ticker'", 'ticker')
       .addSelect('alert.isStocksAlert', 'isStocksAlert')
+      .addSelect('alert.isForexAlert', 'isForexAlert')
       .orderBy("alert.alert_data->>'ticker'")
       .addOrderBy('alert.createdAt', 'DESC');
 

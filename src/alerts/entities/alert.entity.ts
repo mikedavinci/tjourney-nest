@@ -31,6 +31,9 @@ export class Alert {
   @Column({ nullable: true, default: false })
   isStocksAlert: boolean;
 
+  @Column({ nullable: true, default: false })
+  isForexAlert: boolean;
+
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createdAt!: Date;
 

@@ -62,6 +62,20 @@ export class AlertController {
     return await this.alertService.saveStocksAlertData(createAlertDto);
   }
 
+  @Post('create-alert-forex')
+  @ApiOperation({ summary: 'Create a new forex alert' })
+  @ApiResponse({
+    status: 201,
+    description: 'The forex alert has been successfully created.',
+    type: Alert,
+  })
+  @ApiBody({ type: CreateAlertDto })
+  async createForexAlert(
+    @Body(ValidationPipe) createAlertDto: CreateAlertDto
+  ): Promise<Alert> {
+    return await this.alertService.saveForexAlertData(createAlertDto);
+  }
+
   @Get()
   // @UseGuards(ClerkAuthGuard)
   @ApiOperation({ summary: 'Get All Alerts' })
@@ -124,6 +138,7 @@ export class AlertController {
       const transformedAlerts = result.alerts.map((alert) => ({
         ...alert,
         isStocksAlert: alert.isStocksAlert,
+        isForexAlert: alert.isForexAlert,
       }));
 
       return {
