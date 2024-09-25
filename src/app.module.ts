@@ -48,7 +48,7 @@ import { TwelvedataModule } from './twelvedata/twelvedata.module';
       useFactory: async (configService: ConfigService) => ({
         type: 'postgres',
         autoLoadEntities: true,
-        url: 'postgres://mickey:NoMames24!aA@159.65.175.175:5432/tjbe',
+        url: 'postgres://mickey:SiSePuede25!!@159.65.175.175:5432/tjbe',
         // process.env.NODE_ENV !== 'production'
         //   ? process.env.DO_DATABASE_URL
         //   : process.env.PROD_DATABASE_URL,
