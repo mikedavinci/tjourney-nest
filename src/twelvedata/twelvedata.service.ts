@@ -571,27 +571,40 @@ export class TwelveDataService {
   }
 
   private async cacheResults(data: SymbolDataDto[]): Promise<void> {
-    const entitiesToSave = data
-      .filter((item) => item.symbol !== null) // Filter out items where instrument_name is null
-      .map((item) =>
-        this.twelveDataSymbolSearchRepository.create({
-          symbol: item.symbol,
-          instrumentName: item.instrument_name,
-          exchange: item.exchange,
-          micCode: item.mic_code,
-          exchangeTimezone: item.exchange_timezone,
-          instrumentType: item.instrument_type,
-          country: item.country,
-          currency: item.currency,
-          logo: item.logo,
-        })
-      );
+    const entitiesToSave = [];
 
+    for (const item of data) {
+      if (item.symbol !== null) {
+        // Check if the symbol already exists in the repository
+        const existingEntity =
+          await this.twelveDataSymbolSearchRepository.findOne({
+            where: { symbol: item.symbol },
+          });
+
+        // If it doesn't exist, create a new entity
+        if (!existingEntity) {
+          const newEntity = this.twelveDataSymbolSearchRepository.create({
+            symbol: item.symbol,
+            instrumentName: item.instrument_name,
+            exchange: item.exchange,
+            micCode: item.mic_code,
+            exchangeTimezone: item.exchange_timezone,
+            instrumentType: item.instrument_type,
+            country: item.country,
+            currency: item.currency,
+            logo: item.logo,
+          });
+          entitiesToSave.push(newEntity);
+        }
+      }
+    }
+
+    // Save only new entities
     if (entitiesToSave.length > 0) {
       await this.twelveDataSymbolSearchRepository.save(entitiesToSave);
-      console.log(`Successfully cached ${entitiesToSave.length} entities.`);
+      console.log(`Successfully cached ${entitiesToSave.length} new entities.`);
     } else {
-      console.log('No valid entities to cache.');
+      console.log('No new entities to cache.');
     }
   }
 
