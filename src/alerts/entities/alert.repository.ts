@@ -19,34 +19,6 @@ export class AlertRepository extends Repository<Alert> {
     sortBy: string = 'createdAt',
     sortOrder: 'ASC' | 'DESC' = 'DESC'
   ): Promise<{ alerts: Alert[]; total: number }> {
-    const query = this.createQueryBuilder('alert');
-    // const query = this.createQueryBuilder('alert')
-    //   .select('alert.id', 'id')
-    //   .addSelect('alert.createdAt', 'createdAt')
-    //   .addSelect('alert.ticker', 'ticker')
-    //   .addSelect('alert.tf', 'tf')
-    //   .addSelect('alert.alert', 'alert')
-    //   .addSelect('alert.ohlcv', 'ohlcv')
-    //   .addSelect('alert.bartime', 'bartime')
-    //   .addSelect('alert.isStocksAlert', 'isStocksAlert')
-    //   .addSelect('alert.isForexAlert', 'isForexAlert');
-
-    if (tf) {
-      query.andWhere('alert.tf = :tf', { tf });
-    }
-    if (alertType) {
-      query.andWhere('alert.alert ILIKE :alertType', {
-        alertType: `%${alertType}%`,
-      });
-    }
-    if (daysAgo && daysAgo > 0) {
-      const dateLimit = moment().subtract(daysAgo, 'days').toDate();
-      query.andWhere('alert.createdAt > :dateLimit', { dateLimit });
-    }
-    if (ticker) {
-      query.andWhere('alert.ticker = :ticker', { ticker });
-    }
-
     const validSortColumns = [
       'createdAt',
       'updatedAt',
@@ -59,7 +31,43 @@ export class AlertRepository extends Repository<Alert> {
       sortBy = 'createdAt';
     }
 
-    query
+    const subQuery = this.createQueryBuilder('alert')
+      .select('alert.id', 'id')
+      .addSelect('alert.createdAt', 'createdAt')
+      .addSelect('alert.ticker', 'ticker')
+      .addSelect('alert.tf', 'tf')
+      .addSelect('alert.alert', 'alert')
+      .addSelect('alert.ohlcv', 'ohlcv')
+      .addSelect('alert.bartime', 'bartime')
+      .addSelect('alert.isStocksAlert', 'isStocksAlert')
+      .addSelect('alert.isForexAlert', 'isForexAlert');
+
+    if (tf) {
+      subQuery.andWhere('alert.tf = :tf', { tf });
+    }
+    if (alertType) {
+      subQuery.andWhere('alert.alert ILIKE :alertType', {
+        alertType: `%${alertType}%`,
+      });
+    }
+    if (daysAgo && daysAgo > 0) {
+      const dateLimit = moment().subtract(daysAgo, 'days').toDate();
+      subQuery.andWhere('alert.createdAt > :dateLimit', { dateLimit });
+    }
+    if (ticker) {
+      subQuery.andWhere('alert.ticker = :ticker', { ticker });
+    }
+
+    subQuery.orderBy('alert.ticker').addOrderBy('alert.createdAt', 'DESC');
+
+    const query = this.createQueryBuilder('alert')
+      .innerJoin(
+        `(SELECT DISTINCT ON (subq.ticker) * 
+          FROM (${subQuery.getQuery()}) as subq)`,
+        'latest',
+        'alert.id = latest.id'
+      )
+      .setParameters(subQuery.getParameters())
       .orderBy(`alert.${sortBy}`, sortOrder)
       .skip((page - 1) * limit)
       .take(limit);
