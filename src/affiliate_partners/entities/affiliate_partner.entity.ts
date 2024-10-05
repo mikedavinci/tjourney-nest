@@ -25,6 +25,9 @@ export class AffiliatePartner {
   affiliateCode: string;
 
   @Column({ nullable: true })
+  providedAffiliateCode: string;
+
+  @Column({ nullable: true })
   companyName: string;
 
   @Column({ nullable: true })

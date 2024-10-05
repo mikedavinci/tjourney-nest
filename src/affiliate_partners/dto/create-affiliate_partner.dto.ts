@@ -24,6 +24,10 @@ export class CreateAffiliatePartnerDto {
   @IsOptional()
   affiliateCode?: string;
 
+  @IsString()
+  @IsOptional()
+  providedAffiliateCode?: string;
+
   // @IsString()
   // @IsOptional()
   // linkedInProfile?: string;
