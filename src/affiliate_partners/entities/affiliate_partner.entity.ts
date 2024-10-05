@@ -13,6 +13,9 @@ export class AffiliatePartner {
   id: number;
 
   @Column({ nullable: true })
+  fullName: string;
+
+  @Column({ nullable: true })
   email: string;
 
   @Column({ nullable: true })
