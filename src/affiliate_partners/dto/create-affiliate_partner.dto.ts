@@ -20,6 +20,10 @@ export class CreateAffiliatePartnerDto {
   @IsOptional()
   hearAboutUs?: string;
 
+  @IsString()
+  @IsOptional()
+  affiliateCode?: string;
+
   // @IsString()
   // @IsOptional()
   // linkedInProfile?: string;
