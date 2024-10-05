@@ -54,7 +54,7 @@ import { TwelvedataModule } from './twelvedata/twelvedata.module';
         // process.env.NODE_ENV !== 'production'
         //   : process.env.PROD_DATABASE_URL,
         synchronize:
-          configService.get('NODE_ENV') !== 'production' ? true : false,
+          configService.get('NODE_ENV') !== 'production' ? true : true,
         entities: ['dist/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/migration/**/*{.ts,.js}'],
         cli: {
