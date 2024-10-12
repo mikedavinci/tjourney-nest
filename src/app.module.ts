@@ -48,7 +48,7 @@ import { TwelvedataModule } from './twelvedata/twelvedata.module';
       useFactory: async (configService: ConfigService) => ({
         type: 'postgres',
         autoLoadEntities: true,
-        url: 'postgres://mickey:SiSePuede25!!@159.65.175.175:5432/tjprod',
+        url: 'postgresql://mickey:AVNS_grJl1Upz1UO_4ibh2sX@db-postgresql-nyc3-40887-do-user-2321004-0.g.db.ondigitalocean.com:25060/tjbe?sslmode=require',
 
         // 'postgres://mickey:SiSePuede25!!@159.65.175.175:5432/tj',
         // process.env.NODE_ENV !== 'production'

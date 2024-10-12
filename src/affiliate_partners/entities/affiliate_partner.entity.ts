@@ -60,6 +60,9 @@ export class AffiliatePartner {
   @Column({ nullable: true })
   approvedDate: Date;
 
+  @Column({ nullable: true })
+  sessionDate: string;
+
   // @OneToOne(() => User)
   // @JoinColumn()
   // user: User;
