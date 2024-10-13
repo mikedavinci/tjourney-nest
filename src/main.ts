@@ -24,10 +24,6 @@ async function bootstrap() {
   // const ca = process.env.CA_CERT_PATH;
 
   const app = await NestFactory.create(AppModule, {
-    // httpsOptions: {
-    //   ca,
-    //   rejectUnauthorized: true, // false for development
-    // },
     cors: true,
     bodyParser: false,
   });
