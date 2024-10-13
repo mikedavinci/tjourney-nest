@@ -62,7 +62,7 @@ import { TwelvedataModule } from './twelvedata/twelvedata.module';
         },
         ssl: {
           rejectUnauthorized: true,
-          ca: process.env.CA_CERT_PATH,
+          ca: configService.get('CA_CERT_PATH', { infer: true }),
         },
         logging: configService.get('NODE_ENV') !== 'production' ? true : false,
       }),
