@@ -23,6 +23,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     httpsOptions: {
       ca: Buffer.from(ca),
+      rejectUnauthorized: true,
     },
     cors: true,
     bodyParser: false,
