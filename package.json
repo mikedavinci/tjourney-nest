@@ -6,8 +6,8 @@
   "private": true,
   "license": "private",
   "engines": {
-    "node": "18.20.3",
-    "npm": "10.7.0"
+    "node": "20.18.0",
+    "npm": "10.8.2"
   },
   "scripts": {
     "build": "nest build",
