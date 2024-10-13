@@ -60,6 +60,10 @@ import { TwelvedataModule } from './twelvedata/twelvedata.module';
         cli: {
           migrationsDir: __dirname + '/migration/',
         },
+        ssl: {
+          rejectUnauthorized: true,
+          ca: process.env.CA_CERT_PATH,
+        },
         logging: configService.get('NODE_ENV') !== 'production' ? true : false,
       }),
     }),

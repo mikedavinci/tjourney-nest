@@ -24,5 +24,9 @@ export default new DataSource({
   migrationsRun: true,
   synchronize: false,
   dropSchema: false,
+  ssl: {
+    rejectUnauthorized: true,
+    ca: process.env.CA_CERT_PATH,
+  },
   logging: process.env.NODE_ENV !== 'production' ? true : false,
 });
