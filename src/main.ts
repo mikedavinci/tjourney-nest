@@ -14,10 +14,20 @@ import * as path from 'path';
 import * as https from 'https';
 
 async function bootstrap() {
+  if (process.env.NODE_ENV !== 'production') {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  }
+
+  const ca = process.env.CA_CERT_PATH;
+
   const app = await NestFactory.create(AppModule, {
+    httpsOptions: {
+      ca: Buffer.from(ca),
+    },
     cors: true,
     bodyParser: false,
   });
+
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
@@ -58,10 +68,10 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
   await app.listen(8001);
 
-  // console.log(`Application is running on: ${await app.getUrl()}`);
-  // console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  // console.log(
-  //   `NODE_TLS_REJECT_UNAUTHORIZED: ${process.env.NODE_TLS_REJECT_UNAUTHORIZED}`
-  // );
+  console.log(`Application is running on: ${await app.getUrl()}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(
+    `NODE_TLS_REJECT_UNAUTHORIZED: ${process.env.NODE_TLS_REJECT_UNAUTHORIZED}`
+  );
 }
 bootstrap();
