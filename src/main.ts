@@ -14,20 +14,20 @@ import * as path from 'path';
 import * as https from 'https';
 
 async function bootstrap() {
-  if (
-    process.env.NODE_ENV === 'production' ||
-    process.env.NODE_ENV === 'development'
-  ) {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  }
+  // if (
+  //   process.env.NODE_ENV === 'production' ||
+  //   process.env.NODE_ENV === 'development'
+  // ) {
+  //   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  // }
 
-  const ca = process.env.CA_CERT_PATH;
+  // const ca = process.env.CA_CERT_PATH;
 
   const app = await NestFactory.create(AppModule, {
-    httpsOptions: {
-      ca,
-      rejectUnauthorized: true, // false for development
-    },
+    // httpsOptions: {
+    //   ca,
+    //   rejectUnauthorized: true, // false for development
+    // },
     cors: true,
     bodyParser: false,
   });
