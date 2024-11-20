@@ -99,7 +99,9 @@ export class CoinGeckoService {
       let result: Record<string, any> = {};
 
       if (coinsToFetch.length > 0) {
+        console.log('Fetching coins:', coinsToFetch);
         const response = await this.fetchCoinGeckoData(coinsToFetch);
+        console.log('response simple', response);
         await this.saveSimplePrice(response, vs_currency);
         result = { ...result, ...response };
       }
@@ -118,7 +120,7 @@ export class CoinGeckoService {
         }
       });
 
-      // console.log('result', result);
+      console.log('result', result);
       return result;
     } catch (error) {
       console.log('Failed to fetch simple price from CoinGecko', error);
@@ -728,9 +730,9 @@ export class CoinGeckoService {
       // Check if we have cached results
       const cachedResults = await this.coinSearchRepository.find({
         where: [
-          { name: ILike(`${query}%`) },
-          { symbol: ILike(`${query}%`) },
-          { coinId: ILike(`${query}%`) },
+          { name: ILike(`${query}`) },
+          { symbol: ILike(`${query}`) },
+          { coinId: ILike(`${query}`) },
           // { name: ILike(`${query}%`), marketCapRank: LessThan(100) },
           // { symbol: ILike(`${query}%`), marketCapRank: LessThan(100) },
           // { coinId: ILike(`${query}%`), marketCapRank: LessThan(100) }

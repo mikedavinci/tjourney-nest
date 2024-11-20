@@ -28,6 +28,7 @@ import {
   RequireAuthProp,
   StrictAuthProp,
 } from '@clerk/clerk-sdk-node';
+import { MT4SignalResponseDto } from './dto/mt4-signal.dto';
 @ApiBearerAuth()
 @ApiTags('Alerts')
 @Controller('alerts')
@@ -152,5 +153,39 @@ export class AlertController {
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
+  }
+
+  @Get('mt4-forex-signals')
+  @ApiOperation({
+    summary: 'Get MT4 Forex Signals for EUR/USD, AUD/USD, and USD/JPY',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Latest forex signals for MT4',
+    type: [MT4SignalResponseDto],
+  })
+  @ApiQuery({
+    name: 'tf',
+    required: false,
+    description: 'Timeframe (e.g., 240)',
+  })
+  @ApiQuery({
+    name: 'pairs',
+    required: false,
+    description: 'Comma-separated list of pairs',
+  })
+  async getMT4Signals(
+    @Query('pairs') pairs?: string,
+    @Query('tf') timeframe: string = '240' // Default to H4 timeframe
+  ): Promise<MT4SignalResponseDto[]> {
+    const allowedPairs = ['EURUSD', 'AUDUSD', 'USDJPY', 'GBPUSD'];
+    const requestedPairs = pairs ? pairs.split(',') : allowedPairs;
+
+    // Filter out any pairs that aren't in our allowed list
+    const validPairs = requestedPairs.filter((pair) =>
+      allowedPairs.includes(pair)
+    );
+
+    return await this.alertService.getMT4Signals(validPairs, timeframe);
   }
 }
