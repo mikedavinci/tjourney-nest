@@ -15,7 +15,7 @@ export default new DataSource({
   // 'postgres://mickeyprod:SiSePuede25!!@159.65.175.175:5432/pwprod'
   url:
     // process.env.DO_DATABASE_URL,
-    'postgresql://mickey:AVNS_grJl1Upz1UO_4ibh2sX@db-postgresql-nyc3-40887-do-user-2321004-0.g.db.ondigitalocean.com:25060/tjbe?sslmode=require',
+    'postgresql://mickey:AVNS_Gph4XkuKrFP9B41UT7k@db-postgresql-nyc3-59643-do-user-2321004-0.g.db.ondigitalocean.com:25060/tjbe?sslmode=require',
   // process.env.NODE_ENV !== 'production'
   //   ? process.env.DO_DATABASE_URL
   //   : process.env.PROD_DATABASE_URL,

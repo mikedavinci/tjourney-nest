@@ -61,7 +61,7 @@ import { TwelvedataModule } from './twelvedata/twelvedata.module';
           migrationsDir: __dirname + '/migration/',
         },
         ssl: {
-          rejectUnauthorized: false,
+          rejectUnauthorized: true,
           ca: configService.get('CA_CERT_PATH'),
         },
         logging: configService.get('NODE_ENV') !== 'production' ? true : false,
