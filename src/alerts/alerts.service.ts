@@ -174,25 +174,25 @@ export class AlertService {
     luxAlgoAlertDto: LuxAlgoAlertDto
   ): Promise<LuxAlgoAlert> {
     try {
-      console.log(' Processing LuxAlgo alert:', {
-        ticker: luxAlgoAlertDto.ticker,
-        tf: luxAlgoAlertDto.tf,
-        bartime: luxAlgoAlertDto.bartime,
-        alert_type: luxAlgoAlertDto.alert_data?.alert,
-      });
+      console.log(' Processing LuxAlgo alert with data:', luxAlgoAlertDto);
 
       if (!this.luxAlgoRepository) {
         console.error(' LuxAlgoRepository is not initialized!');
         throw new Error('Repository not initialized');
       }
 
+      // Create alert with flexible data
       const alert = this.luxAlgoRepository.create({
-        ...luxAlgoAlertDto,
+        alert_data: luxAlgoAlertDto.alert_data,
+        ticker: luxAlgoAlertDto.ticker || 'UNKNOWN',
+        tf: luxAlgoAlertDto.tf || '240',
+        bartime: luxAlgoAlertDto.bartime || Date.now(),
       });
+
       console.log(' Created alert entity:', {
-        id: alert.id,
         ticker: alert.ticker,
         tf: alert.tf,
+        bartime: alert.bartime,
       });
 
       const savedAlert = await this.luxAlgoRepository.save(alert);
@@ -201,6 +201,7 @@ export class AlertService {
         ticker: savedAlert.ticker,
         tf: savedAlert.tf,
         bartime: savedAlert.bartime,
+        alert_type: savedAlert.alert_data?.alert,
       });
 
       return savedAlert;
@@ -304,12 +305,14 @@ export class AlertService {
       console.log(' Query results:', {
         found: alerts.length,
         total,
-        first_alert: alerts[0] ? {
-          id: alerts[0].id,
-          ticker: alerts[0].ticker,
-          tf: alerts[0].tf,
-          bartime: alerts[0].bartime,
-        } : null,
+        first_alert: alerts[0]
+          ? {
+              id: alerts[0].id,
+              ticker: alerts[0].ticker,
+              tf: alerts[0].tf,
+              bartime: alerts[0].bartime,
+            }
+          : null,
       });
 
       return { alerts, total };
