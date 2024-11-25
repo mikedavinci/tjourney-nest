@@ -1,5 +1,5 @@
 // Service
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Alert } from './entities/alert.entity';
@@ -7,11 +7,17 @@ import { CreateAlertDto } from './dto/create-alert.dto';
 import * as moment from 'moment';
 import { AlertRepository } from './entities/alert.repository';
 import { MT4SignalResponseDto } from './dto/mt4-signal.dto';
+import { LuxAlgoAlert } from './entities/luxalgo.entity';
+import { LuxAlgoRepository } from './entities/luxalgo.repository';
+import { LuxAlgoAlertDto } from './dto/luxalgo-alert.dto';
+
 @Injectable()
 export class AlertService {
   constructor(
     @InjectRepository(AlertRepository)
-    private alertRepository: AlertRepository
+    private alertRepository: AlertRepository,
+    @InjectRepository(LuxAlgoRepository)
+    private luxAlgoRepository: LuxAlgoRepository
   ) {}
 
   async saveAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
@@ -162,5 +168,66 @@ export class AlertService {
 
   private formatPrice(price: number): number {
     return Number(price.toFixed(5));
+  }
+
+  async saveLuxAlgoAlert(
+    luxAlgoAlertDto: LuxAlgoAlertDto
+  ): Promise<LuxAlgoAlert> {
+    const alert = this.luxAlgoRepository.create({
+      ...luxAlgoAlertDto,
+    });
+
+    return await this.luxAlgoRepository.save(alert);
+  }
+
+  async getLatestLuxAlgoAlert(
+    ticker: string,
+    timeframe?: string
+  ): Promise<LuxAlgoAlert> {
+    const queryBuilder = this.luxAlgoRepository
+      .createQueryBuilder('luxalgo')
+      .where('luxalgo.ticker = :ticker', { ticker })
+      .orderBy('luxalgo.bartime', 'DESC')
+      .take(1);
+
+    if (timeframe) {
+      queryBuilder.andWhere('luxalgo.tf = :timeframe', { timeframe });
+    }
+
+    const alert = await queryBuilder.getOne();
+
+    if (!alert) {
+      throw new NotFoundException(
+        `No LuxAlgo alert found for ticker ${ticker}`
+      );
+    }
+
+    return alert;
+  }
+
+  async getLuxAlgoAlerts(
+    page: number = 1,
+    limit: number = 10,
+    ticker?: string,
+    timeframe?: string
+  ): Promise<{ alerts: LuxAlgoAlert[]; total: number }> {
+    const queryBuilder = this.luxAlgoRepository
+      .createQueryBuilder('luxalgo')
+      .orderBy('luxalgo.bartime', 'DESC');
+
+    if (ticker) {
+      queryBuilder.andWhere('luxalgo.ticker = :ticker', { ticker });
+    }
+
+    if (timeframe) {
+      queryBuilder.andWhere('luxalgo.tf = :timeframe', { timeframe });
+    }
+
+    const [alerts, total] = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return { alerts, total };
   }
 }

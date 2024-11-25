@@ -17,6 +17,7 @@ import {
   HttpException,
   HttpStatus,
   ParseIntPipe,
+  Param,
 } from '@nestjs/common';
 import { AlertService } from './alerts.service';
 import { CreateAlertDto } from './dto/create-alert.dto';
@@ -29,6 +30,9 @@ import {
   StrictAuthProp,
 } from '@clerk/clerk-sdk-node';
 import { MT4SignalResponseDto } from './dto/mt4-signal.dto';
+import { LuxAlgoAlert } from './entities/luxalgo.entity';
+import { LuxAlgoAlertDto } from './dto/luxalgo-alert.dto';
+
 @ApiBearerAuth()
 @ApiTags('Alerts')
 @Controller('alerts')
@@ -167,7 +171,7 @@ export class AlertController {
   @ApiQuery({
     name: 'tf',
     required: false,
-    description: 'Timeframe (1 = 1min, 60 = 1h, 240 = 4h)',
+    description: 'Timeframe (1 = 1min, 15 = 15min, 60 = 1h, 240 = 4h)',
   })
   @ApiQuery({
     name: 'pairs',
@@ -185,7 +189,14 @@ export class AlertController {
       pairs
     );
 
-    const allowedPairs = ['EURUSD', 'AUDUSD', 'USDJPY', 'GBPUSD', 'BTCUSD'];
+    const allowedPairs = [
+      'EURUSD',
+      'AUDUSD',
+      'USDJPY',
+      'GBPUSD',
+      'BTCUSD',
+      'ETHUSD',
+    ];
     const requestedPairs = pairs ? pairs.split(',') : allowedPairs;
 
     // Filter out any pairs that aren't in our allowed list
@@ -194,12 +205,69 @@ export class AlertController {
     );
 
     // Normalize timeframe
-    const validTimeframes = ['1', '60', '240'];
+    const validTimeframes = ['1', '15', '60', '240'];
     if (!validTimeframes.includes(timeframe)) {
       console.log('Invalid timeframe:', timeframe, 'defaulting to 240');
       timeframe = '240';
     }
 
     return await this.alertService.getMT4Signals(validPairs, timeframe);
+  }
+
+  @Post('luxalgo')
+  @ApiOperation({ summary: 'Save LuxAlgo alert data' })
+  @ApiResponse({
+    status: 201,
+    description: 'The LuxAlgo alert has been successfully saved',
+    type: LuxAlgoAlert,
+  })
+  @ApiBody({ type: LuxAlgoAlertDto })
+  async saveLuxAlgoAlert(
+    @Body(ValidationPipe) luxAlgoAlertDto: LuxAlgoAlertDto
+  ): Promise<LuxAlgoAlert> {
+    return await this.alertService.saveLuxAlgoAlert(luxAlgoAlertDto);
+  }
+
+  @Get('luxalgo/:ticker')
+  @ApiOperation({ summary: 'Get latest LuxAlgo alert for a ticker' })
+  @ApiResponse({ status: 200, type: LuxAlgoAlert })
+  @ApiQuery({
+    name: 'tf',
+    required: false,
+    description: 'Timeframe (e.g., 240 for H4)',
+  })
+  async getLatestLuxAlgoAlert(
+    @Param('ticker') ticker: string,
+    @Query('tf') timeframe?: string
+  ): Promise<LuxAlgoAlert> {
+    return await this.alertService.getLatestLuxAlgoAlert(ticker, timeframe);
+  }
+
+  @Get('luxalgo')
+  @ApiOperation({ summary: 'Get all LuxAlgo alerts' })
+  @ApiResponse({ status: 200, type: [LuxAlgoAlert] })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'ticker', required: false, type: String })
+  @ApiQuery({ name: 'tf', required: false, type: String })
+  async getLuxAlgoAlerts(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('ticker') ticker?: string,
+    @Query('tf') timeframe?: string
+  ): Promise<{ alerts: LuxAlgoAlert[]; total: number }> {
+    try {
+      return await this.alertService.getLuxAlgoAlerts(
+        page,
+        limit,
+        ticker,
+        timeframe
+      );
+    } catch (error) {
+      throw new HttpException(
+        'Failed to fetch LuxAlgo alerts',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 }
