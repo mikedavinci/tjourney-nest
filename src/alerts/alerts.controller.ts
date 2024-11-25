@@ -225,7 +225,23 @@ export class AlertController {
   async saveLuxAlgoAlert(
     @Body(ValidationPipe) luxAlgoAlertDto: LuxAlgoAlertDto
   ): Promise<LuxAlgoAlert> {
-    return await this.alertService.saveLuxAlgoAlert(luxAlgoAlertDto);
+    try {
+      console.log('📥 Received TradingView webhook for LuxAlgo:', {
+        ticker: luxAlgoAlertDto.ticker,
+        tf: luxAlgoAlertDto.tf,
+        alert_data: luxAlgoAlertDto.alert_data,
+      });
+      
+      const result = await this.alertService.saveLuxAlgoAlert(luxAlgoAlertDto);
+      console.log('✅ Successfully saved LuxAlgo alert with ID:', result.id);
+      return result;
+    } catch (error) {
+      console.error('❌ Error saving LuxAlgo alert:', error);
+      throw new HttpException(
+        'Failed to save LuxAlgo alert',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Get('luxalgo/:ticker')
@@ -240,7 +256,20 @@ export class AlertController {
     @Param('ticker') ticker: string,
     @Query('tf') timeframe?: string
   ): Promise<LuxAlgoAlert> {
-    return await this.alertService.getLatestLuxAlgoAlert(ticker, timeframe);
+    try {
+      console.log('🔍 Fetching latest LuxAlgo alert:', { ticker, timeframe });
+      const result = await this.alertService.getLatestLuxAlgoAlert(ticker, timeframe);
+      console.log('✅ Found LuxAlgo alert:', {
+        id: result.id,
+        ticker: result.ticker,
+        tf: result.tf,
+        bartime: result.bartime,
+      });
+      return result;
+    } catch (error) {
+      console.error('❌ Error fetching LuxAlgo alert:', error);
+      throw error;
+    }
   }
 
   @Get('luxalgo')
@@ -257,16 +286,27 @@ export class AlertController {
     @Query('tf') timeframe?: string
   ): Promise<{ alerts: LuxAlgoAlert[]; total: number }> {
     try {
-      return await this.alertService.getLuxAlgoAlerts(
+      console.log('🔍 Fetching LuxAlgo alerts with params:', {
+        page: page || 1,
+        limit: limit || 10,
+        ticker: ticker || 'all',
+        timeframe: timeframe || 'all',
+      });
+      
+      const result = await this.alertService.getLuxAlgoAlerts(
         page,
         limit,
         ticker,
         timeframe
       );
+      
+      console.log(`✅ Retrieved ${result.alerts.length} LuxAlgo alerts out of ${result.total} total`);
+      return result;
     } catch (error) {
+      console.error('❌ Error fetching LuxAlgo alerts:', error);
       throw new HttpException(
         'Failed to fetch LuxAlgo alerts',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

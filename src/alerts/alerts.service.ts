@@ -173,20 +173,39 @@ export class AlertService {
   async saveLuxAlgoAlert(
     luxAlgoAlertDto: LuxAlgoAlertDto
   ): Promise<LuxAlgoAlert> {
-    console.log('LuxAlgo Repository:', this.luxAlgoRepository);
-    console.log('Attempting to save LuxAlgo alert with data:', luxAlgoAlertDto);
-
     try {
+      console.log(' Processing LuxAlgo alert:', {
+        ticker: luxAlgoAlertDto.ticker,
+        tf: luxAlgoAlertDto.tf,
+        bartime: luxAlgoAlertDto.bartime,
+        alert_type: luxAlgoAlertDto.alert_data?.alert,
+      });
+
+      if (!this.luxAlgoRepository) {
+        console.error(' LuxAlgoRepository is not initialized!');
+        throw new Error('Repository not initialized');
+      }
+
       const alert = this.luxAlgoRepository.create({
         ...luxAlgoAlertDto,
       });
-      console.log('Created alert entity:', alert);
+      console.log(' Created alert entity:', {
+        id: alert.id,
+        ticker: alert.ticker,
+        tf: alert.tf,
+      });
 
       const savedAlert = await this.luxAlgoRepository.save(alert);
-      console.log('Saved alert:', savedAlert);
+      console.log(' Saved alert to database:', {
+        id: savedAlert.id,
+        ticker: savedAlert.ticker,
+        tf: savedAlert.tf,
+        bartime: savedAlert.bartime,
+      });
+
       return savedAlert;
     } catch (error) {
-      console.error('Error in saveLuxAlgoAlert:', error);
+      console.error(' Error in saveLuxAlgoAlert:', error);
       throw error;
     }
   }
@@ -195,8 +214,17 @@ export class AlertService {
     ticker: string,
     timeframe?: string
   ): Promise<LuxAlgoAlert> {
-    console.log('Getting latest LuxAlgo alert for:', { ticker, timeframe });
     try {
+      console.log(' Fetching latest LuxAlgo alert for:', {
+        ticker,
+        timeframe: timeframe || 'any',
+      });
+
+      if (!this.luxAlgoRepository) {
+        console.error(' LuxAlgoRepository is not initialized!');
+        throw new Error('Repository not initialized');
+      }
+
       const queryBuilder = this.luxAlgoRepository
         .createQueryBuilder('luxalgo')
         .where('luxalgo.ticker = :ticker', { ticker })
@@ -207,19 +235,29 @@ export class AlertService {
         queryBuilder.andWhere('luxalgo.tf = :timeframe', { timeframe });
       }
 
-      console.log('Query:', queryBuilder.getSql());
+      console.log(' Executing query:', queryBuilder.getSql());
+      console.log('Query parameters:', { ticker, timeframe });
+
       const alert = await queryBuilder.getOne();
-      console.log('Found alert:', alert);
 
       if (!alert) {
+        console.log(' No alert found for:', { ticker, timeframe });
         throw new NotFoundException(
           `No LuxAlgo alert found for ticker ${ticker}`
         );
       }
 
+      console.log(' Found alert:', {
+        id: alert.id,
+        ticker: alert.ticker,
+        tf: alert.tf,
+        bartime: alert.bartime,
+        alert_type: alert.alert_data?.alert,
+      });
+
       return alert;
     } catch (error) {
-      console.error('Error in getLatestLuxAlgoAlert:', error);
+      console.error(' Error in getLatestLuxAlgoAlert:', error);
       throw error;
     }
   }
@@ -230,8 +268,19 @@ export class AlertService {
     ticker?: string,
     timeframe?: string
   ): Promise<{ alerts: LuxAlgoAlert[]; total: number }> {
-    console.log('Getting LuxAlgo alerts with params:', { page, limit, ticker, timeframe });
     try {
+      console.log(' Fetching LuxAlgo alerts with params:', {
+        page,
+        limit,
+        ticker: ticker || 'all',
+        timeframe: timeframe || 'all',
+      });
+
+      if (!this.luxAlgoRepository) {
+        console.error(' LuxAlgoRepository is not initialized!');
+        throw new Error('Repository not initialized');
+      }
+
       const queryBuilder = this.luxAlgoRepository
         .createQueryBuilder('luxalgo')
         .orderBy('luxalgo.bartime', 'DESC');
@@ -244,16 +293,28 @@ export class AlertService {
         queryBuilder.andWhere('luxalgo.tf = :timeframe', { timeframe });
       }
 
-      console.log('Query:', queryBuilder.getSql());
+      console.log(' Executing query:', queryBuilder.getSql());
+      console.log('Query parameters:', { page, limit, ticker, timeframe });
+
       const [alerts, total] = await queryBuilder
         .skip((page - 1) * limit)
         .take(limit)
         .getManyAndCount();
 
-      console.log('Found alerts:', { count: alerts.length, total });
+      console.log(' Query results:', {
+        found: alerts.length,
+        total,
+        first_alert: alerts[0] ? {
+          id: alerts[0].id,
+          ticker: alerts[0].ticker,
+          tf: alerts[0].tf,
+          bartime: alerts[0].bartime,
+        } : null,
+      });
+
       return { alerts, total };
     } catch (error) {
-      console.error('Error in getLuxAlgoAlerts:', error);
+      console.error(' Error in getLuxAlgoAlerts:', error);
       throw error;
     }
   }
