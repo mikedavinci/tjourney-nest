@@ -173,36 +173,55 @@ export class AlertService {
   async saveLuxAlgoAlert(
     luxAlgoAlertDto: LuxAlgoAlertDto
   ): Promise<LuxAlgoAlert> {
-    const alert = this.luxAlgoRepository.create({
-      ...luxAlgoAlertDto,
-    });
+    console.log('LuxAlgo Repository:', this.luxAlgoRepository);
+    console.log('Attempting to save LuxAlgo alert with data:', luxAlgoAlertDto);
 
-    return await this.luxAlgoRepository.save(alert);
+    try {
+      const alert = this.luxAlgoRepository.create({
+        ...luxAlgoAlertDto,
+      });
+      console.log('Created alert entity:', alert);
+
+      const savedAlert = await this.luxAlgoRepository.save(alert);
+      console.log('Saved alert:', savedAlert);
+      return savedAlert;
+    } catch (error) {
+      console.error('Error in saveLuxAlgoAlert:', error);
+      throw error;
+    }
   }
 
   async getLatestLuxAlgoAlert(
     ticker: string,
     timeframe?: string
   ): Promise<LuxAlgoAlert> {
-    const queryBuilder = this.luxAlgoRepository
-      .createQueryBuilder('luxalgo')
-      .where('luxalgo.ticker = :ticker', { ticker })
-      .orderBy('luxalgo.bartime', 'DESC')
-      .take(1);
+    console.log('Getting latest LuxAlgo alert for:', { ticker, timeframe });
+    try {
+      const queryBuilder = this.luxAlgoRepository
+        .createQueryBuilder('luxalgo')
+        .where('luxalgo.ticker = :ticker', { ticker })
+        .orderBy('luxalgo.bartime', 'DESC')
+        .take(1);
 
-    if (timeframe) {
-      queryBuilder.andWhere('luxalgo.tf = :timeframe', { timeframe });
+      if (timeframe) {
+        queryBuilder.andWhere('luxalgo.tf = :timeframe', { timeframe });
+      }
+
+      console.log('Query:', queryBuilder.getSql());
+      const alert = await queryBuilder.getOne();
+      console.log('Found alert:', alert);
+
+      if (!alert) {
+        throw new NotFoundException(
+          `No LuxAlgo alert found for ticker ${ticker}`
+        );
+      }
+
+      return alert;
+    } catch (error) {
+      console.error('Error in getLatestLuxAlgoAlert:', error);
+      throw error;
     }
-
-    const alert = await queryBuilder.getOne();
-
-    if (!alert) {
-      throw new NotFoundException(
-        `No LuxAlgo alert found for ticker ${ticker}`
-      );
-    }
-
-    return alert;
   }
 
   async getLuxAlgoAlerts(
@@ -211,23 +230,31 @@ export class AlertService {
     ticker?: string,
     timeframe?: string
   ): Promise<{ alerts: LuxAlgoAlert[]; total: number }> {
-    const queryBuilder = this.luxAlgoRepository
-      .createQueryBuilder('luxalgo')
-      .orderBy('luxalgo.bartime', 'DESC');
+    console.log('Getting LuxAlgo alerts with params:', { page, limit, ticker, timeframe });
+    try {
+      const queryBuilder = this.luxAlgoRepository
+        .createQueryBuilder('luxalgo')
+        .orderBy('luxalgo.bartime', 'DESC');
 
-    if (ticker) {
-      queryBuilder.andWhere('luxalgo.ticker = :ticker', { ticker });
+      if (ticker) {
+        queryBuilder.andWhere('luxalgo.ticker = :ticker', { ticker });
+      }
+
+      if (timeframe) {
+        queryBuilder.andWhere('luxalgo.tf = :timeframe', { timeframe });
+      }
+
+      console.log('Query:', queryBuilder.getSql());
+      const [alerts, total] = await queryBuilder
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount();
+
+      console.log('Found alerts:', { count: alerts.length, total });
+      return { alerts, total };
+    } catch (error) {
+      console.error('Error in getLuxAlgoAlerts:', error);
+      throw error;
     }
-
-    if (timeframe) {
-      queryBuilder.andWhere('luxalgo.tf = :timeframe', { timeframe });
-    }
-
-    const [alerts, total] = await queryBuilder
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
-
-    return { alerts, total };
   }
 }
