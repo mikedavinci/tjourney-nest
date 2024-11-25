@@ -157,7 +157,7 @@ export class AlertController {
 
   @Get('mt4-forex-signals')
   @ApiOperation({
-    summary: 'Get MT4 Forex Signals for EUR/USD, AUD/USD, and USD/JPY',
+    summary: 'Get MT4 Forex Signals for supported pairs',
   })
   @ApiResponse({
     status: 200,
@@ -167,7 +167,7 @@ export class AlertController {
   @ApiQuery({
     name: 'tf',
     required: false,
-    description: 'Timeframe (e.g., 240)',
+    description: 'Timeframe (1 = 1min, 60 = 1h, 240 = 4h)',
   })
   @ApiQuery({
     name: 'pairs',
@@ -178,13 +178,27 @@ export class AlertController {
     @Query('pairs') pairs?: string,
     @Query('tf') timeframe: string = '240' // Default to H4 timeframe
   ): Promise<MT4SignalResponseDto[]> {
-    const allowedPairs = ['EURUSD', 'AUDUSD', 'USDJPY', 'GBPUSD'];
+    console.log(
+      'Received request with timeframe:',
+      timeframe,
+      'and pairs:',
+      pairs
+    );
+
+    const allowedPairs = ['EURUSD', 'AUDUSD', 'USDJPY', 'GBPUSD', 'BTCUSD'];
     const requestedPairs = pairs ? pairs.split(',') : allowedPairs;
 
     // Filter out any pairs that aren't in our allowed list
     const validPairs = requestedPairs.filter((pair) =>
       allowedPairs.includes(pair)
     );
+
+    // Normalize timeframe
+    const validTimeframes = ['1', '60', '240'];
+    if (!validTimeframes.includes(timeframe)) {
+      console.log('Invalid timeframe:', timeframe, 'defaulting to 240');
+      timeframe = '240';
+    }
 
     return await this.alertService.getMT4Signals(validPairs, timeframe);
   }

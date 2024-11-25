@@ -89,34 +89,58 @@ export class AlertService {
       const latestAlert = await this.alertRepository
         .createQueryBuilder('alert')
         .where('alert.ticker = :pair', { pair })
-        .andWhere('alert.isForexAlert = true')
         .andWhere('alert.tf = :timeframe', { timeframe })
         .orderBy('alert.bartime', 'DESC')
         .getOne();
 
       if (latestAlert) {
+        console.log('Found latest alert for pair:', pair);
+        console.log('OHLCV data:', JSON.stringify(latestAlert.ohlcv, null, 2));
+
+        // Check if take profit values exist
+        const tp1 = latestAlert.ohlcv?.tp1 ?? undefined;
+        const tp2 = latestAlert.ohlcv?.tp2 ?? undefined;
+        const sl1 = latestAlert.ohlcv?.sl1 ?? undefined;
+        const sl2 = latestAlert.ohlcv?.sl2 ?? undefined;
+
+        console.log('Take Profit values:', {
+          tp1: tp1 !== undefined ? tp1 : 'not available',
+          tp2: tp2 !== undefined ? tp2 : 'not available',
+        });
+        console.log('Stop Loss values:', {
+          sl1: sl1 !== undefined ? sl1 : 'not available',
+          sl2: sl2 !== undefined ? sl2 : 'not available',
+        });
+
         // Extract the pattern from the alert
         const { action, pattern } = this.parseAlertSignal(latestAlert.alert);
         const isBearish = action === 'SELL';
 
+        console.log('Signal action:', action);
+        console.log('Pattern:', pattern);
+
         const signal: MT4SignalResponseDto = {
-          ticker: latestAlert.ticker,
+          ticker: pair,
           action: action,
           price: latestAlert.ohlcv.close,
           timestamp: moment(Number(latestAlert.bartime)).format(
             'MM/DD/YYYY hh:mm:ss A'
           ),
-          stopLoss: this.calculateStopLoss(latestAlert.ohlcv.close, isBearish),
-          takeProfit: this.calculateTakeProfit(
-            latestAlert.ohlcv.close,
-            isBearish
-          ),
+          stopLoss: sl1, // Use the safely extracted value
+          takeProfit: tp1, // Use the safely extracted value
+          sl1,
+          sl2,
+          tp1,
+          tp2,
           signalPattern: pattern,
           ohlcv: latestAlert.ohlcv,
           timeframe: latestAlert.tf,
         };
 
+        console.log('Generated signal:', JSON.stringify(signal, null, 2));
         signals.push(signal);
+      } else {
+        console.log('No alert found for pair:', pair);
       }
     }
 
@@ -140,27 +164,4 @@ export class AlertService {
     return Number(price.toFixed(5));
   }
 
-  private calculateStopLoss(
-    price: number,
-    isBearish: boolean
-  ): number | undefined {
-    const percentage = 0.01; // 1% for Forex
-    const stopLoss = isBearish
-      ? price * (1 + percentage) // For bearish/SELL: 1% above entry
-      : price * (1 - percentage); // For bullish/BUY: 1% below entry
-
-    return this.formatPrice(stopLoss);
-  }
-
-  private calculateTakeProfit(
-    price: number,
-    isBearish: boolean
-  ): number | undefined {
-    const percentage = 0.02; // 2% for Forex
-    const takeProfit = isBearish
-      ? price * (1 - percentage) // For bearish/SELL: 2% below entry
-      : price * (1 + percentage); // For bullish/BUY: 2% above entry
-
-    return this.formatPrice(takeProfit);
-  }
 }

@@ -5,6 +5,10 @@ export class MT4SignalResponseDto {
   price: number;
   stopLoss?: number;
   takeProfit?: number;
+  sl1?: number;
+  tp1?: number;
+  sl2?: number;
+  tp2?: number;
   timestamp: string;
   signalPattern: string; //(e.g., "Confirmation+", "Turn +")
   ohlcv: {

@@ -11,11 +11,15 @@ export interface AlertData {
   ticker: string;
   tf: string;
   ohlcv: {
-    open: number;
-    high: number;
     low: number;
+    high: number;
+    open: number;
     close: number;
     volume: number;
+    tp1?: number;
+    sl1?: number;
+    tp2?: number;
+    sl2?: number;
   };
   bartime: number;
 }
@@ -38,6 +42,10 @@ export class Alert {
     open: number;
     close: number;
     volume: number;
+    tp1?: number;
+    sl1?: number;
+    tp2?: number;
+    sl2?: number;
   };
 
   @Column()
