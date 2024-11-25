@@ -16,11 +16,11 @@ export interface AlertData {
     open: number;
     close: number;
     volume: number;
-    tp1?: number;
-    sl1?: number;
-    tp2?: number;
-    sl2?: number;
   };
+  tp1?: number;
+  sl1?: number;
+  tp2?: number;
+  sl2?: number;
   bartime: number;
 }
 
@@ -42,11 +42,19 @@ export class Alert {
     open: number;
     close: number;
     volume: number;
-    tp1?: number;
-    sl1?: number;
-    tp2?: number;
-    sl2?: number;
   };
+
+  @Column({ nullable: true })
+  tp1?: number;
+
+  @Column({ nullable: true })
+  sl1?: number;
+
+  @Column({ nullable: true })
+  tp2?: number;
+
+  @Column({ nullable: true })
+  sl2?: number;
 
   @Column()
   ticker: string;

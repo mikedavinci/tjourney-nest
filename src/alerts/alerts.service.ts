@@ -98,10 +98,10 @@ export class AlertService {
         console.log('OHLCV data:', JSON.stringify(latestAlert.ohlcv, null, 2));
 
         // Check if take profit values exist
-        const tp1 = latestAlert.ohlcv?.tp1 ?? undefined;
-        const tp2 = latestAlert.ohlcv?.tp2 ?? undefined;
-        const sl1 = latestAlert.ohlcv?.sl1 ?? undefined;
-        const sl2 = latestAlert.ohlcv?.sl2 ?? undefined;
+        const tp1 = latestAlert.tp1 ?? undefined;
+        const tp2 = latestAlert.tp2 ?? undefined;
+        const sl1 = latestAlert.sl1 ?? undefined;
+        const sl2 = latestAlert.sl2 ?? undefined;
 
         console.log('Take Profit values:', {
           tp1: tp1 !== undefined ? tp1 : 'not available',
@@ -126,8 +126,8 @@ export class AlertService {
           timestamp: moment(Number(latestAlert.bartime)).format(
             'MM/DD/YYYY hh:mm:ss A'
           ),
-          stopLoss: sl1, // Use the safely extracted value
-          takeProfit: tp1, // Use the safely extracted value
+          stopLoss: sl1,
+          takeProfit: tp1,
           sl1,
           sl2,
           tp1,
@@ -163,5 +163,4 @@ export class AlertService {
   private formatPrice(price: number): number {
     return Number(price.toFixed(5));
   }
-
 }

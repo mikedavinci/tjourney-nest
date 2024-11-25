@@ -22,22 +22,6 @@ class OhlcvDto {
 
   @IsNumber()
   volume: number;
-
-  @IsNumber()
-  @IsOptional()
-  tp1?: number;
-
-  @IsNumber()
-  @IsOptional()
-  sl1?: number;
-
-  @IsNumber()
-  @IsOptional()
-  tp2?: number;
-
-  @IsNumber()
-  @IsOptional()
-  sl2?: number;
 }
 
 export class CreateAlertDto {
@@ -68,4 +52,20 @@ export class CreateAlertDto {
   @IsOptional()
   @IsBoolean()
   isForexAlert?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  tp1?: number;
+
+  @IsNumber()
+  @IsOptional()
+  sl1?: number;
+
+  @IsNumber()
+  @IsOptional()
+  tp2?: number;
+
+  @IsNumber()
+  @IsOptional()
+  sl2?: number;
 }
