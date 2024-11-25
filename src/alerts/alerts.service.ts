@@ -100,8 +100,8 @@ export class AlertService {
         .getOne();
 
       if (latestAlert) {
-        console.log('Found latest alert for pair:', pair);
-        console.log('OHLCV data:', JSON.stringify(latestAlert.ohlcv, null, 2));
+        // console.log('Found latest alert for pair:', pair);
+        // console.log('OHLCV data:', JSON.stringify(latestAlert.ohlcv, null, 2));
 
         // Check if take profit values exist
         const tp1 = latestAlert.tp1 ?? undefined;
@@ -122,8 +122,8 @@ export class AlertService {
         const { action, pattern } = this.parseAlertSignal(latestAlert.alert);
         const isBearish = action === 'SELL';
 
-        console.log('Signal action:', action);
-        console.log('Pattern:', pattern);
+        // console.log('Signal action:', action);
+        // console.log('Pattern:', pattern);
 
         const signal: MT4SignalResponseDto = {
           ticker: pair,
@@ -143,7 +143,7 @@ export class AlertService {
           timeframe: latestAlert.tf,
         };
 
-        console.log('Generated signal:', JSON.stringify(signal, null, 2));
+        // console.log('Generated signal:', JSON.stringify(signal, null, 2));
         signals.push(signal);
       } else {
         console.log('No alert found for pair:', pair);

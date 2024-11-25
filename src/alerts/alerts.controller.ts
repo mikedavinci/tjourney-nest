@@ -182,12 +182,12 @@ export class AlertController {
     @Query('pairs') pairs?: string,
     @Query('tf') timeframe: string = '240' // Default to H4 timeframe
   ): Promise<MT4SignalResponseDto[]> {
-    console.log(
-      'Received request with timeframe:',
-      timeframe,
-      'and pairs:',
-      pairs
-    );
+    // console.log(
+    //   'Received request with timeframe:',
+    //   timeframe,
+    //   'and pairs:',
+    //   pairs
+    // );
 
     const allowedPairs = [
       'EURUSD',
