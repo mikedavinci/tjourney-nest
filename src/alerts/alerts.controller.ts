@@ -196,6 +196,7 @@ export class AlertController {
       'GBPUSD',
       'BTCUSD',
       'ETHUSD',
+      'LTCUSD',
     ];
     const requestedPairs = pairs ? pairs.split(',') : allowedPairs;
 
