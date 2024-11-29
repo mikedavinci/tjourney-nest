@@ -32,12 +32,16 @@ import {
 import { MT4SignalResponseDto } from './dto/mt4-signal.dto';
 import { LuxAlgoAlert } from './entities/luxalgo.entity';
 import { LuxAlgoAlertDto } from './dto/luxalgo-alert.dto';
+import { LoggerService } from './services/logger.service';
 
 @ApiBearerAuth()
-@ApiTags('Alerts')
+@ApiTags('alerts')
 @Controller('alerts')
 export class AlertController {
-  constructor(private readonly alertService: AlertService) {}
+  constructor(
+    private readonly alertService: AlertService,
+    private readonly loggerService: LoggerService,
+  ) {}
 
   @Post('create-alert')
   @ApiOperation({ summary: 'Create a new alert' })
@@ -319,5 +323,37 @@ export class AlertController {
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
+  }
+
+  @Post('log')
+  @ApiOperation({ summary: 'Send logs to Papertrail' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        level: { type: 'string', enum: ['info', 'error', 'warn'] },
+        metadata: { type: 'object' }
+      },
+      required: ['message']
+    }
+  })
+  async sendLog(
+    @Body() logData: { message: string; level?: 'info' | 'error' | 'warn'; metadata?: any }
+  ) {
+    const { message, level = 'info', metadata } = logData;
+    
+    switch (level) {
+      case 'error':
+        this.loggerService.error(message, metadata);
+        break;
+      case 'warn':
+        this.loggerService.warn(message, metadata);
+        break;
+      default:
+        this.loggerService.log(message, metadata);
+    }
+
+    return { success: true, message: 'Log sent to Papertrail' };
   }
 }
