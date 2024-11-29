@@ -33,4 +33,8 @@ export class LoggerService {
   warn(message: string, metadata?: any) {
     this.logger.warn(message, metadata);
   }
+
+  console(message: string, metadata?: any) {
+    console.log(message, metadata);
+  }
 }
