@@ -109,14 +109,14 @@ export class AlertService {
         const sl1 = latestAlert.sl1 ?? undefined;
         const sl2 = latestAlert.sl2 ?? undefined;
 
-        console.log('Take Profit values:', {
-          tp1: tp1 !== undefined ? tp1 : 'not available',
-          tp2: tp2 !== undefined ? tp2 : 'not available',
-        });
-        console.log('Stop Loss values:', {
-          sl1: sl1 !== undefined ? sl1 : 'not available',
-          sl2: sl2 !== undefined ? sl2 : 'not available',
-        });
+        // console.log('Take Profit values:', {
+        //   tp1: tp1 !== undefined ? tp1 : 'not available',
+        //   tp2: tp2 !== undefined ? tp2 : 'not available',
+        // });
+        // console.log('Stop Loss values:', {
+        //   sl1: sl1 !== undefined ? sl1 : 'not available',
+        //   sl2: sl2 !== undefined ? sl2 : 'not available',
+        // });
 
         // Extract the pattern from the alert
         const { action, pattern } = this.parseAlertSignal(latestAlert.alert);
