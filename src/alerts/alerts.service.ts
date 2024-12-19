@@ -20,31 +20,81 @@ export class AlertService {
     private luxAlgoRepository: LuxAlgoRepository
   ) {}
 
+  private processExitSignal(alert: string): {
+    isExit: boolean;
+    exitType: 'bullish' | 'bearish' | null;
+    baseSignal: string;
+  } {
+    const isExitBearish = alert.includes('ExitsBearish Exit');
+    const isExitBullish = alert.includes('ExitsBullish Exit');
+    const isExit = isExitBearish || isExitBullish;
+
+    let exitType = null;
+    if (isExitBearish) exitType = 'bearish';
+    if (isExitBullish) exitType = 'bullish';
+
+    // Remove exit signal text to get base signal
+    let baseSignal = alert;
+    if (isExit) {
+      baseSignal = alert
+        .replace('ExitsBearish Exit', '')
+        .replace('ExitsBullish Exit', '')
+        .replace('+', '')
+        .trim();
+    }
+
+    return { isExit, exitType, baseSignal };
+  }
+
   async saveAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
+    // Process the exit signal
+    const { isExit, exitType, baseSignal } = this.processExitSignal(
+      createAlertDto.alert
+    );
+
+    // Create alert with additional exit information
     const alert = this.alertRepository.create({
       ...createAlertDto,
+      alert: baseSignal, // Store the base signal without exit information
+      isExit,
+      exitType,
       isStocksAlert: false,
       isForexAlert: false,
+    });
+
+    console.log('Saving alert with exit information:', {
+      baseSignal,
+      isExit,
+      exitType,
+      ticker: alert.ticker,
+      tf: alert.tf,
     });
 
     return await this.alertRepository.save(alert);
   }
 
   async saveForexAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
+    // Process the exit signal for forex alerts
+    const { isExit, exitType, baseSignal } = this.processExitSignal(
+      createAlertDto.alert
+    );
+
+    // Create forex alert with exit information
     const alert = this.alertRepository.create({
       ...createAlertDto,
+      alert: baseSignal,
+      isExit,
+      exitType,
       isStocksAlert: false,
       isForexAlert: true,
     });
 
-    return await this.alertRepository.save(alert);
-  }
-
-  async saveStockAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
-    const alert = this.alertRepository.create({
-      ...createAlertDto,
-      isStocksAlert: true,
-      isForexAlert: false,
+    console.log('Saving forex alert with exit information:', {
+      baseSignal,
+      isExit,
+      exitType,
+      ticker: alert.ticker,
+      tf: alert.tf,
     });
 
     return await this.alertRepository.save(alert);

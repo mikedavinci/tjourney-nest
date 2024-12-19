@@ -68,6 +68,12 @@ export class Alert {
   @Column({ default: false })
   isForexAlert: boolean;
 
+  @Column({ default: false })
+  isExit: boolean;
+
+  @Column({ type: 'varchar', nullable: true })
+  exitType: 'bullish' | 'bearish' | null;
+
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createdAt!: Date;
 

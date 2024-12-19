@@ -40,7 +40,7 @@ import { LoggerService } from './services/logger.service';
 export class AlertController {
   constructor(
     private readonly alertService: AlertService,
-    private readonly loggerService: LoggerService,
+    private readonly loggerService: LoggerService
   ) {}
 
   @Post('create-alert')
@@ -57,19 +57,19 @@ export class AlertController {
     return await this.alertService.saveAlertData(createAlertDto);
   }
 
-  @Post('create-alert-stocks')
-  @ApiOperation({ summary: 'Create a new stocks alert' })
-  @ApiResponse({
-    status: 201,
-    description: 'The stocks alert has been successfully created.',
-    type: Alert,
-  })
-  @ApiBody({ type: CreateAlertDto })
-  async createStocksAlert(
-    @Body(ValidationPipe) createAlertDto: CreateAlertDto
-  ): Promise<Alert> {
-    return await this.alertService.saveStockAlertData(createAlertDto);
-  }
+  // @Post('create-alert-stocks')
+  // @ApiOperation({ summary: 'Create a new stocks alert' })
+  // @ApiResponse({
+  //   status: 201,
+  //   description: 'The stocks alert has been successfully created.',
+  //   type: Alert,
+  // })
+  // @ApiBody({ type: CreateAlertDto })
+  // async createStocksAlert(
+  //   @Body(ValidationPipe) createAlertDto: CreateAlertDto
+  // ): Promise<Alert> {
+  //   return await this.alertService.saveStockAlertData(createAlertDto);
+  // }
 
   @Post('create-alert-forex')
   @ApiOperation({ summary: 'Create a new forex alert' })
@@ -240,7 +240,7 @@ export class AlertController {
       };
 
       console.log('🔄 Processed webhook data into DTO:', alertDto);
-      
+
       const result = await this.alertService.saveLuxAlgoAlert(alertDto);
       console.log('✅ Successfully saved LuxAlgo alert with ID:', result.id);
       return result;
@@ -333,16 +333,21 @@ export class AlertController {
       properties: {
         message: { type: 'string' },
         level: { type: 'string', enum: ['info', 'error', 'warn'] },
-        metadata: { type: 'object' }
+        metadata: { type: 'object' },
       },
-      required: ['message']
-    }
+      required: ['message'],
+    },
   })
   async sendLog(
-    @Body() logData: { message: string; level?: 'info' | 'error' | 'warn'; metadata?: any }
+    @Body()
+    logData: {
+      message: string;
+      level?: 'info' | 'error' | 'warn';
+      metadata?: any;
+    }
   ) {
     const { message, level = 'info', metadata } = logData;
-    
+
     switch (level) {
       case 'error':
         this.loggerService.error(message, metadata);

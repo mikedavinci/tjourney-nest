@@ -17,7 +17,9 @@ export class AlertRepository extends Repository<Alert> {
     page: number = 1,
     limit: number = 500,
     sortBy: string = 'createdAt',
-    sortOrder: 'ASC' | 'DESC' = 'DESC'
+    sortOrder: 'ASC' | 'DESC' = 'DESC',
+    exitType?: 'bullish' | 'bearish' | null,
+    isExit?: boolean
   ): Promise<{ alerts: Alert[]; total: number }> {
     const validSortColumns = [
       'createdAt',
@@ -71,6 +73,25 @@ export class AlertRepository extends Repository<Alert> {
       .orderBy(`alert.${sortBy}`, sortOrder)
       .skip((page - 1) * limit)
       .take(limit);
+
+    // Add exit signal filtering
+    if (isExit !== undefined) {
+      query.andWhere('alert.isExit = :isExit', { isExit });
+    }
+
+    if (exitType) {
+      query.andWhere('alert.exitType = :exitType', { exitType });
+    }
+
+    // Add sorting
+    if (sortBy && sortOrder) {
+      query.orderBy(`alert.${sortBy}`, sortOrder);
+    }
+
+    // Add pagination
+    if (limit) {
+      query.skip((page - 1) * limit).take(limit);
+    }
 
     const [alerts, total] = await query.getManyAndCount();
 
