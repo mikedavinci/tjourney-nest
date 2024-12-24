@@ -20,20 +20,33 @@ export class AlertService {
     private luxAlgoRepository: LuxAlgoRepository
   ) {}
 
-  private processExitSignal(alert: string): {
+  private processExitSignal(
+    alert: string,
+    ohlcv: any
+  ): {
     isExit: boolean;
     exitType: 'bullish' | 'bearish' | null;
     baseSignal: string;
+    tp1?: number;
   } {
     const isExitBearish = alert.includes('ExitsBearish Exit');
     const isExitBullish = alert.includes('ExitsBullish Exit');
     const isExit = isExitBearish || isExitBullish;
 
     let exitType = null;
-    if (isExitBearish) exitType = 'bearish';
-    if (isExitBullish) exitType = 'bullish';
+    let tp1 = null;
 
-    // Remove exit signal text to get base signal
+    if (isExitBearish) {
+      exitType = 'bearish';
+      // For SELL positions, set current close as take profit
+      tp1 = ohlcv.close;
+    }
+    if (isExitBullish) {
+      exitType = 'bullish';
+      // For BUY positions, set current close as take profit
+      tp1 = ohlcv.close;
+    }
+
     let baseSignal = alert;
     if (isExit) {
       baseSignal = alert
@@ -43,21 +56,23 @@ export class AlertService {
         .trim();
     }
 
-    return { isExit, exitType, baseSignal };
+    return { isExit, exitType, baseSignal, tp1 };
   }
 
   async saveAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
     // Process the exit signal
-    const { isExit, exitType, baseSignal } = this.processExitSignal(
-      createAlertDto.alert
+    const { isExit, exitType, baseSignal, tp1 } = this.processExitSignal(
+      createAlertDto.alert,
+      createAlertDto.ohlcv
     );
 
     // Create alert with additional exit information
     const alert = this.alertRepository.create({
       ...createAlertDto,
-      alert: baseSignal, // Store the base signal without exit information
+      alert: baseSignal,
       isExit,
       exitType,
+      tp1, // Add tp1 from exit signal
       isStocksAlert: false,
       isForexAlert: false,
     });
@@ -66,6 +81,7 @@ export class AlertService {
       baseSignal,
       isExit,
       exitType,
+      tp1,
       ticker: alert.ticker,
       tf: alert.tf,
     });
@@ -75,8 +91,9 @@ export class AlertService {
 
   async saveForexAlertData(createAlertDto: CreateAlertDto): Promise<Alert> {
     // Process the exit signal for forex alerts
-    const { isExit, exitType, baseSignal } = this.processExitSignal(
-      createAlertDto.alert
+    const { isExit, exitType, baseSignal, tp1 } = this.processExitSignal(
+      createAlertDto.alert,
+      createAlertDto.ohlcv
     );
 
     // Create forex alert with exit information
@@ -85,6 +102,7 @@ export class AlertService {
       alert: baseSignal,
       isExit,
       exitType,
+      tp1, // Add tp1 from exit signal
       isStocksAlert: false,
       isForexAlert: true,
     });
@@ -93,6 +111,7 @@ export class AlertService {
       baseSignal,
       isExit,
       exitType,
+      tp1,
       ticker: alert.ticker,
       tf: alert.tf,
     });
@@ -141,7 +160,6 @@ export class AlertService {
     const signals: MT4SignalResponseDto[] = [];
 
     for (const pair of pairs) {
-      // Get the latest forex alert for each pair
       const latestAlert = await this.alertRepository
         .createQueryBuilder('alert')
         .where('alert.ticker = :pair', { pair })
@@ -150,30 +168,11 @@ export class AlertService {
         .getOne();
 
       if (latestAlert) {
-        // console.log('Found latest alert for pair:', pair);
-        // console.log('OHLCV data:', JSON.stringify(latestAlert.ohlcv, null, 2));
-
-        // Check if take profit values exist
-        const tp1 = latestAlert.tp1 ?? undefined;
-        const tp2 = latestAlert.tp2 ?? undefined;
-        const sl1 = latestAlert.sl1 ?? undefined;
-        const sl2 = latestAlert.sl2 ?? undefined;
-
-        // console.log('Take Profit values:', {
-        //   tp1: tp1 !== undefined ? tp1 : 'not available',
-        //   tp2: tp2 !== undefined ? tp2 : 'not available',
-        // });
-        // console.log('Stop Loss values:', {
-        //   sl1: sl1 !== undefined ? sl1 : 'not available',
-        //   sl2: sl2 !== undefined ? sl2 : 'not available',
-        // });
-
         // Extract the pattern from the alert
         const { action, pattern } = this.parseAlertSignal(latestAlert.alert);
-        const isBearish = action === 'SELL';
 
-        // console.log('Signal action:', action);
-        // console.log('Pattern:', pattern);
+        // Use tp1 from exit signal if available, otherwise use tp2
+        const takeProfit = latestAlert.tp1 ?? latestAlert.tp2;
 
         const signal: MT4SignalResponseDto = {
           ticker: pair,
@@ -182,21 +181,20 @@ export class AlertService {
           timestamp: moment(Number(latestAlert.bartime)).format(
             'MM/DD/YYYY hh:mm:ss A'
           ),
-          stopLoss: sl1,
-          takeProfit: tp1,
-          sl1,
-          sl2,
-          tp1,
-          tp2,
+          stopLoss: latestAlert.sl2,
+          takeProfit: takeProfit,
+          sl1: latestAlert.sl1,
+          sl2: latestAlert.sl2,
+          tp1: latestAlert.tp1,
+          tp2: latestAlert.tp2,
           signalPattern: pattern,
           ohlcv: latestAlert.ohlcv,
           timeframe: latestAlert.tf,
+          isExit: latestAlert.isExit,
+          exitType: latestAlert.exitType,
         };
 
-        // console.log('Generated signal:', JSON.stringify(signal, null, 2));
         signals.push(signal);
-      } else {
-        console.log('No alert found for pair:', pair);
       }
     }
 

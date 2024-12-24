@@ -1,4 +1,3 @@
-// src/alerts/dto/mt4-signal.dto.ts
 export class MT4SignalResponseDto {
   ticker: string;
   action: 'BUY' | 'SELL' | 'NEUTRAL';
@@ -10,7 +9,7 @@ export class MT4SignalResponseDto {
   sl2?: number;
   tp2?: number;
   timestamp: string;
-  signalPattern: string; //(e.g., "Confirmation+", "Turn +")
+  signalPattern: string;
   ohlcv: {
     low: number;
     high: number;
@@ -19,4 +18,6 @@ export class MT4SignalResponseDto {
     volume: number;
   };
   timeframe: string;
+  isExit: boolean;
+  exitType: 'bullish' | 'bearish' | null;
 }
