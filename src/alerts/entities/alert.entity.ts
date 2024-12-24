@@ -44,16 +44,16 @@ export class Alert {
     volume: number;
   };
 
-  @Column({ nullable: true })
+  @Column({ type: 'decimal', nullable: true, precision: 10, scale: 6 })
   tp1?: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'decimal', nullable: true, precision: 10, scale: 6 })
   sl1?: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'decimal', nullable: true, precision: 10, scale: 6 })
   tp2?: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'decimal', nullable: true, precision: 10, scale: 6 })
   sl2?: number;
 
   @Column()
