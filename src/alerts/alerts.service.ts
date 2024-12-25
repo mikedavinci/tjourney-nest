@@ -29,32 +29,51 @@ export class AlertService {
     baseSignal: string;
     tp1?: number;
   } {
-    const isExitBearish = alert.includes('ExitsBearish Exit');
-    const isExitBullish = alert.includes('ExitsBullish Exit');
+    // Check for both formats of exit signals
+    const isExitBearish =
+      alert.includes('ExitsBearish Exit') ||
+      alert.includes('Exits Bearish Exit');
+    const isExitBullish =
+      alert.includes('ExitsBullish Exit') ||
+      alert.includes('Exits Bullish Exit');
     const isExit = isExitBearish || isExitBullish;
 
     let exitType = null;
     let tp1 = null;
 
+    // Process based on exit type
     if (isExitBearish) {
       exitType = 'bearish';
-      // For SELL positions, set current close as take profit
-      tp1 = ohlcv.close;
+      tp1 = ohlcv.close; // Set take profit to current close for SELL exits
+      console.log('Processing Bearish Exit Signal - Setting tp1 to:', tp1);
     }
     if (isExitBullish) {
       exitType = 'bullish';
-      // For BUY positions, set current close as take profit
-      tp1 = ohlcv.close;
+      tp1 = ohlcv.close; // Set take profit to current close for BUY exits
+      console.log('Processing Bullish Exit Signal - Setting tp1 to:', tp1);
     }
 
+    // Clean up the base signal
     let baseSignal = alert;
     if (isExit) {
       baseSignal = alert
         .replace('ExitsBearish Exit', '')
         .replace('ExitsBullish Exit', '')
+        .replace('Exits Bearish Exit', '')
+        .replace('Exits Bullish Exit', '')
+        .replace('Confirmation +', '')
         .replace('+', '')
         .trim();
     }
+
+    console.log('Exit Signal Processing:', {
+      originalAlert: alert,
+      isExit,
+      exitType,
+      baseSignal,
+      tp1,
+      close: ohlcv?.close,
+    });
 
     return { isExit, exitType, baseSignal, tp1 };
   }
