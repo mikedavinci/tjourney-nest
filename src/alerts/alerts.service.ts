@@ -40,31 +40,21 @@ export class AlertService {
 
     let exitType = null;
     let tp1 = null;
+    let baseSignal = '';
 
     // Process based on exit type
     if (isExitBearish) {
       exitType = 'bearish';
       tp1 = ohlcv.close; // Set take profit to current close for SELL exits
+      baseSignal = 'Exits Bearish Exit';
       console.log('Processing Bearish Exit Signal - Setting tp1 to:', tp1);
     }
     if (isExitBullish) {
       exitType = 'bullish';
       tp1 = ohlcv.close; // Set take profit to current close for BUY exits
+      baseSignal = 'Exits Bullish Exit';
       console.log('Processing Bullish Exit Signal - Setting tp1 to:', tp1);
-    }
-
-    // Clean up the base signal
-    let baseSignal = alert;
-    if (isExit) {
-      baseSignal = alert
-        .replace('ExitsBearish Exit', '')
-        .replace('ExitsBullish Exit', '')
-        .replace('Exits Bearish Exit', '')
-        .replace('Exits Bullish Exit', '')
-        .replace('Confirmation +', '')
-        .replace('+', '')
-        .trim();
-    }
+    } 
 
     console.log('Exit Signal Processing:', {
       originalAlert: alert,
