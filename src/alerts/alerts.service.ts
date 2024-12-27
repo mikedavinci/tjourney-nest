@@ -29,7 +29,6 @@ export class AlertService {
     baseSignal: string;
     tp1?: number;
   } {
-    // Check for both formats of exit signals
     const isExitBearish =
       alert.includes('ExitsBearish Exit') ||
       alert.includes('Exits Bearish Exit');
@@ -40,21 +39,19 @@ export class AlertService {
 
     let exitType = null;
     let tp1 = null;
-    let baseSignal = '';
+    let baseSignal = alert;
 
-    // Process based on exit type
     if (isExitBearish) {
       exitType = 'bearish';
       tp1 = ohlcv.close; // Set take profit to current close for SELL exits
       baseSignal = 'Exits Bearish Exit';
       console.log('Processing Bearish Exit Signal - Setting tp1 to:', tp1);
-    }
-    if (isExitBullish) {
+    } else if (isExitBullish) {
       exitType = 'bullish';
       tp1 = ohlcv.close; // Set take profit to current close for BUY exits
       baseSignal = 'Exits Bullish Exit';
       console.log('Processing Bullish Exit Signal - Setting tp1 to:', tp1);
-    } 
+    }
 
     console.log('Exit Signal Processing:', {
       originalAlert: alert,
@@ -78,7 +75,7 @@ export class AlertService {
     // Create alert with additional exit information
     const alert = this.alertRepository.create({
       ...createAlertDto,
-      alert: baseSignal,
+      alert: baseSignal || createAlertDto.alert,
       isExit,
       exitType,
       tp1, // Add tp1 from exit signal
@@ -108,7 +105,7 @@ export class AlertService {
     // Create forex alert with exit information
     const alert = this.alertRepository.create({
       ...createAlertDto,
-      alert: baseSignal,
+      alert: baseSignal || createAlertDto.alert,
       isExit,
       exitType,
       tp1, // Add tp1 from exit signal

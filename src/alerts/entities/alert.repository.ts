@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, DeepPartial, Repository, SaveOptions } from 'typeorm';
 import { Alert } from './alert.entity';
 import * as moment from 'moment';
 
@@ -7,6 +7,27 @@ import * as moment from 'moment';
 export class AlertRepository extends Repository<Alert> {
   constructor(private dataSource: DataSource) {
     super(Alert, dataSource.createEntityManager());
+  }
+
+  async save<T extends DeepPartial<Alert>>(
+    entity: T,
+    options?: SaveOptions
+  ): Promise<T> {
+    try {
+      console.log('Repository attempting to save alert:', {
+        ticker: entity.ticker,
+        tf: entity.tf,
+        alert: entity.alert,
+        isExit: entity.isExit,
+        exitType: entity.exitType,
+      });
+      const savedAlert = await super.save(entity, options);
+      console.log('Alert saved successfully:', savedAlert);
+      return savedAlert;
+    } catch (error) {
+      console.error('Repository error saving alert:', error);
+      throw error;
+    }
   }
 
   async getFilteredAlerts(
