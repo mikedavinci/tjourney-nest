@@ -211,11 +211,32 @@ export class AlertService {
     action: 'BUY' | 'SELL' | 'NEUTRAL';
     pattern: string;
   } {
-    const isBullish = alertText.includes('Bullish');
-    const isBearish = alertText.includes('Bearish');
+    // First check if it's an exit signal
+    const isExit = alertText.includes('Exit');
+    if (isExit) {
+      return {
+        action: 'NEUTRAL', // All exits should be NEUTRAL
+        pattern: alertText,
+      };
+    }
+
+    // For non-exit signals, check direction
+    const isBullish = alertText.toLowerCase().includes('bullish');
+    const isBearish = alertText.toLowerCase().includes('bearish');
+    const isConfirmation = alertText.includes('Confirmation');
+
+    let action: 'BUY' | 'SELL' | 'NEUTRAL';
+
+    if (isBearish && isConfirmation) {
+      action = 'SELL';
+    } else if (isBullish && isConfirmation) {
+      action = 'BUY';
+    } else {
+      action = 'NEUTRAL';
+    }
 
     return {
-      action: isBullish ? 'BUY' : isBearish ? 'SELL' : 'NEUTRAL',
+      action,
       pattern: alertText,
     };
   }
