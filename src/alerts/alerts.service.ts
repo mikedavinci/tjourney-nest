@@ -166,50 +166,67 @@ export class AlertService {
     const signals: MT4SignalResponseDto[] = [];
 
     for (const pair of pairs) {
-      // console.log('Querying with:', { pair, timeframe });
-
-      // Use getFilteredAlerts instead of direct query
       const { alerts } = await this.alertRepository.getFilteredAlerts(
-        timeframe, // tf
-        undefined, // alertType
-        undefined, // daysAgo
-        pair, // ticker
-        1, // page
-        1, // limit
-        'bartime', // sortBy
-        'DESC' // sortOrder
+        timeframe,
+        undefined,
+        undefined,
+        pair,
+        1,
+        1,
+        'bartime',
+        'DESC'
       );
 
-      const latestAlert = alerts[0]; // Get the first (latest) alert
-
+      const latestAlert = alerts[0];
       if (latestAlert) {
-        //console.log('Raw database result:', latestAlert);
-
-        // Extract the pattern from the alert
         const { action, pattern } = this.parseAlertSignal(latestAlert.alert);
-        console.log('Parsed signal:', { action, pattern });
+
+        // Convert string prices to numbers
+        const closePrice = latestAlert.ohlcv.close;
+        let stopLoss = Number(latestAlert.sl2);
+        let takeProfit = Number(latestAlert.tp2);
+
+        // Validate and swap SL/TP based on direction
+        if (action === 'BUY') {
+          // For BUY signals: SL must be below entry, TP above entry
+          if (stopLoss > closePrice) {
+            // Swap SL2 and TP2 if they're inverted
+            [stopLoss, takeProfit] = [
+              Number(latestAlert.tp2),
+              Number(latestAlert.sl2),
+            ];
+          }
+        } else if (action === 'SELL') {
+          // For SELL signals: SL must be above entry, TP below entry
+          if (stopLoss < closePrice) {
+            // Swap SL2 and TP2 if they're inverted
+            [stopLoss, takeProfit] = [
+              Number(latestAlert.tp2),
+              Number(latestAlert.sl2),
+            ];
+          }
+        }
 
         const signal: MT4SignalResponseDto = {
           ticker: pair,
           action: action,
-          price: latestAlert.ohlcv.close,
+          price: closePrice,
           timestamp: moment(Number(latestAlert.bartime)).format(
             'MM/DD/YYYY hh:mm:ss A'
           ),
-          stopLoss: latestAlert.sl2,
-          takeProfit: latestAlert.tp2,
-          sl1: latestAlert.sl1,
-          sl2: latestAlert.sl2,
-          tp1: latestAlert.tp1,
-          tp2: latestAlert.tp2,
-          signalPattern: latestAlert.alert, // Use the original alert text
+          stopLoss: stopLoss,
+          takeProfit: takeProfit,
+          sl1: latestAlert.sl1 ? Number(latestAlert.sl1) : undefined,
+          sl2: stopLoss,
+          tp1: latestAlert.tp1 ? Number(latestAlert.tp1) : undefined,
+          tp2: takeProfit,
+          signalPattern: latestAlert.alert,
           ohlcv: latestAlert.ohlcv,
           timeframe: latestAlert.tf,
           isExit: latestAlert.isExit,
           exitType: latestAlert.exitType,
         };
 
-        console.log('Created MT4 signal:', signal);
         signals.push(signal);
       }
     }
