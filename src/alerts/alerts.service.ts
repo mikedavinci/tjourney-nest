@@ -174,11 +174,11 @@ export class AlertService {
         .getOne();
 
       if (latestAlert) {
+        console.log('Found latest alert:', latestAlert); // Debug log
+
         // Extract the pattern from the alert
         const { action, pattern } = this.parseAlertSignal(latestAlert.alert);
-
-        // Use tp1 from exit signal if available, otherwise use tp2
-        const takeProfit = latestAlert.tp1 ?? latestAlert.tp2;
+        console.log('Parsed signal:', { action, pattern }); // Debug log
 
         const signal: MT4SignalResponseDto = {
           ticker: pair,
@@ -188,22 +188,22 @@ export class AlertService {
             'MM/DD/YYYY hh:mm:ss A'
           ),
           stopLoss: latestAlert.sl2,
-          takeProfit: takeProfit,
+          takeProfit: latestAlert.tp2,
           sl1: latestAlert.sl1,
           sl2: latestAlert.sl2,
           tp1: latestAlert.tp1,
           tp2: latestAlert.tp2,
-          signalPattern: pattern,
+          signalPattern: latestAlert.alert, // Use the original alert text
           ohlcv: latestAlert.ohlcv,
           timeframe: latestAlert.tf,
           isExit: latestAlert.isExit,
           exitType: latestAlert.exitType,
         };
 
+        console.log('Created MT4 signal:', signal); // Debug log
         signals.push(signal);
       }
     }
-
     return signals;
   }
 
