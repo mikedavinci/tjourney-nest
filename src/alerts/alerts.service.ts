@@ -211,29 +211,38 @@ export class AlertService {
     action: 'BUY' | 'SELL' | 'NEUTRAL';
     pattern: string;
   } {
+    // Log the incoming alert text
+    console.log('Parsing alert signal:', alertText);
+
     // First check if it's an exit signal
     const isExit = alertText.includes('Exit');
     if (isExit) {
+      console.log('Exit signal detected, setting action to NEUTRAL');
       return {
-        action: 'NEUTRAL', // All exits should be NEUTRAL
+        action: 'NEUTRAL',
         pattern: alertText,
       };
     }
 
-    // For non-exit signals, check direction
+    // For non-exit signals, check direction with more flexible matching
     const isBullish = alertText.toLowerCase().includes('bullish');
     const isBearish = alertText.toLowerCase().includes('bearish');
-    const isConfirmation = alertText.includes('Confirmation');
+    const isConfirmation = alertText.toLowerCase().includes('confirmation');
 
     let action: 'BUY' | 'SELL' | 'NEUTRAL';
 
     if (isBearish && isConfirmation) {
       action = 'SELL';
+      console.log('Bearish Confirmation detected, setting action to SELL');
     } else if (isBullish && isConfirmation) {
       action = 'BUY';
+      console.log('Bullish Confirmation detected, setting action to BUY');
     } else {
       action = 'NEUTRAL';
+      console.log('No confirmation detected, setting action to NEUTRAL');
     }
+
+    console.log('Final parsed signal:', { action, pattern: alertText });
 
     return {
       action,
