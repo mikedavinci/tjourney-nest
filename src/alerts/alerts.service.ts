@@ -166,19 +166,28 @@ export class AlertService {
     const signals: MT4SignalResponseDto[] = [];
 
     for (const pair of pairs) {
-      const latestAlert = await this.alertRepository
-        .createQueryBuilder('alert')
-        .where('alert.ticker = :pair', { pair })
-        .andWhere('alert.tf = :timeframe', { timeframe })
-        .orderBy('alert.bartime', 'DESC')
-        .getOne();
+      // console.log('Querying with:', { pair, timeframe });
+
+      // Use getFilteredAlerts instead of direct query
+      const { alerts } = await this.alertRepository.getFilteredAlerts(
+        timeframe, // tf
+        undefined, // alertType
+        undefined, // daysAgo
+        pair, // ticker
+        1, // page
+        1, // limit
+        'bartime', // sortBy
+        'DESC' // sortOrder
+      );
+
+      const latestAlert = alerts[0]; // Get the first (latest) alert
 
       if (latestAlert) {
-        console.log('Found latest alert:', latestAlert); // Debug log
+        //console.log('Raw database result:', latestAlert);
 
         // Extract the pattern from the alert
         const { action, pattern } = this.parseAlertSignal(latestAlert.alert);
-        console.log('Parsed signal:', { action, pattern }); // Debug log
+        console.log('Parsed signal:', { action, pattern });
 
         const signal: MT4SignalResponseDto = {
           ticker: pair,
@@ -200,7 +209,7 @@ export class AlertService {
           exitType: latestAlert.exitType,
         };
 
-        console.log('Created MT4 signal:', signal); // Debug log
+        console.log('Created MT4 signal:', signal);
         signals.push(signal);
       }
     }
