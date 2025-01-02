@@ -175,7 +175,8 @@ export class AlertController {
   @ApiQuery({
     name: 'tf',
     required: false,
-    description: 'Timeframe (1 = 1min, 15 = 15min, 60 = 1h, 240 = 4h)',
+    description:
+      'Timeframe (1 = 1min, 15 = 15min, 30 = 30min, 60 = 1h, 240 = 4h)',
   })
   @ApiQuery({
     name: 'pairs',
@@ -186,13 +187,6 @@ export class AlertController {
     @Query('pairs') pairs?: string,
     @Query('tf') timeframe: string = '240' // Default to H4 timeframe
   ): Promise<MT4SignalResponseDto[]> {
-    // console.log(
-    //   'Received request with timeframe:',
-    //   timeframe,
-    //   'and pairs:',
-    //   pairs
-    // );
-
     const allowedPairs = [
       'EURUSD',
       'AUDUSD',
@@ -210,7 +204,7 @@ export class AlertController {
     );
 
     // Normalize timeframe
-    const validTimeframes = ['1', '15', '60', '240'];
+    const validTimeframes = ['1', '15', '30', '60', '240'];
     if (!validTimeframes.includes(timeframe)) {
       console.log('Invalid timeframe:', timeframe, 'defaulting to 240');
       timeframe = '240';
