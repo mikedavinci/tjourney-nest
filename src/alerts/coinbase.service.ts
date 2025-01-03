@@ -168,12 +168,48 @@ export class CoinbaseService {
     }
   }
 
-  public async getFuturesBalanceSummary(): Promise<CommonTypes.FCMBalanceSummary> {
-    const response = await this.client.request({
-      method: method.GET,
-      endpoint: `${API_PREFIX}/cfm/balance_summary`,
-      isPublic: false,
+  private async makeRequest(method: method, endpoint: string, params?: any) {
+    this.loggerService.log(`Coinbase API Request:`, {
+      method,
+      endpoint,
+      params,
+      timestamp: new Date().toISOString(),
     });
+
+    try {
+      const response = await this.client.request({
+        method,
+        endpoint,
+        bodyParams: params,
+        isPublic: false,
+      });
+
+      this.loggerService.log(`Coinbase API Response Success:`, {
+        method,
+        endpoint,
+        response: JSON.stringify(response),
+        timestamp: new Date().toISOString(),
+      });
+
+      return response;
+    } catch (error) {
+      this.loggerService.error(`Coinbase API Error:`, {
+        method,
+        endpoint,
+        error: error.message,
+        response: error.response,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+      });
+      throw error;
+    }
+  }
+
+  public async getFuturesBalanceSummary(): Promise<CommonTypes.FCMBalanceSummary> {
+    const response = await this.makeRequest(
+      method.GET,
+      `${API_PREFIX}/cfm/balance_summary`
+    );
     return response.balance_summary;
   }
 
@@ -188,14 +224,14 @@ export class CoinbaseService {
   public async getFuturesPosition(
     productId: string
   ): Promise<CommonTypes.FCMPosition | undefined> {
-    const response = await this.client.request({
-      method: method.GET,
-      endpoint: `${API_PREFIX}/cfm/positions/${productId}`,
-      isPublic: false,
-    });
+    const response = await this.makeRequest(
+      method.GET,
+      `${API_PREFIX}/cfm/positions/${productId}`
+    );
     return response.position;
   }
 
+  @Cron('*/5 * * * *') // Run every 5 minutes
   async checkAndExecuteTrades() {
     this.lastCheckTime = new Date();
 
@@ -212,21 +248,27 @@ export class CoinbaseService {
         return;
       }
 
-      // Get BTC signals directly
-      const signals = await this.getMT4Signals('BTCUSD', '30');
-      if (!signals || signals.length === 0) {
+      // Process BTC (30min timeframe)
+      const btcSignals = await this.getMT4Signals('BTCUSD', '30');
+      if (btcSignals && btcSignals.length > 0) {
+        this.loggerService.log('Processing BTC signals (30min)', {
+          signal: btcSignals[0],
+        });
+        await this.processCryptoSignal('BTC', btcSignals[0]);
+      } else {
         this.loggerService.log('No signals available for BTC');
-        return;
       }
 
-      // Get latest signal
-      const latestSignal = signals[0];
-      this.loggerService.log('Received signal for BTC', {
-        signal: latestSignal,
-      });
-
-      // Process the signal
-      await this.processCryptoSignal('BTC', latestSignal);
+      // Process ETH (15min timeframe)
+      const ethSignals = await this.getMT4Signals('ETHUSD', '15');
+      if (ethSignals && ethSignals.length > 0) {
+        this.loggerService.log('Processing ETH signals (15min)', {
+          signal: ethSignals[0],
+        });
+        await this.processCryptoSignal('ETH', ethSignals[0]);
+      } else {
+        this.loggerService.log('No signals available for ETH');
+      }
     } catch (error) {
       this.logger.error('Error in checkAndExecuteTrades:', {
         error: error.message,
@@ -236,6 +278,11 @@ export class CoinbaseService {
   }
 
   private async processCryptoSignal(symbol: string, signal: any) {
+    this.loggerService.log(`Processing signal for ${symbol}`, {
+      timeframe: symbol === 'BTC' ? '30' : '15',
+      signal: JSON.stringify(signal),
+    });
+
     const config = COINBASE_CONFIG.FUTURES[symbol];
     const state = this.tradingState.get(symbol);
 
@@ -299,6 +346,7 @@ export class CoinbaseService {
         error: error.message,
         stack: error.stack,
         signal: signal,
+        timeframe: symbol === 'BTC' ? '30' : '15',
       });
     }
   }
@@ -519,10 +567,14 @@ export class CoinbaseService {
       productId: config.PRODUCT_ID,
       side: action,
       orderConfiguration: {
-        market_market_ioc: marketIoc,
+        market_market_ioc: {
+          base_size: baseSize,
+        },
       },
       marginType: CommonTypes.MarginType.CROSS,
       leverage: config.DEFAULT_LEVERAGE.toString(),
+      stopLoss: alert.sl2?.toString(),
+      takeProfit: alert.tp2?.toString(),
     };
   }
 
@@ -607,6 +659,11 @@ export class CoinbaseService {
 
     return true;
   }
+
+  private readonly timeframes = {
+    BTC: '30',
+    ETH: '15',
+  };
 
   // Utility method to reset daily stats (should be called at the start of each trading day)
   @Cron('0 0 * * *') // Run at midnight

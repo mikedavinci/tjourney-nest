@@ -373,15 +373,50 @@ export class AlertController {
   })
   async getTradingStatus() {
     try {
-      // Get futures balance summary
-      const balanceSummary =
-        await this.coinbaseService.getFuturesBalanceSummary();
+      this.loggerService.log('Trading status request initiated', {
+        timestamp: new Date().toISOString(),
+      });
 
-      // Get positions for BTC and ETH
-      const btcPosition =
-        await this.coinbaseService.getFuturesPosition('BTC-USD');
-      const ethPosition =
-        await this.coinbaseService.getFuturesPosition('ETH-USD');
+      // Get futures balance summary
+      let balanceSummary;
+      try {
+        balanceSummary = await this.coinbaseService.getFuturesBalanceSummary();
+        this.loggerService.log('Coinbase balance summary response:', {
+          raw_response: balanceSummary,
+        });
+      } catch (error) {
+        this.loggerService.error('Failed to fetch balance summary:', {
+          error: error.message,
+          response: error.response,
+        });
+      }
+
+      // Get BTC position
+      let btcPosition;
+      try {
+        btcPosition = await this.coinbaseService.getFuturesPosition('BTC-USD');
+        this.loggerService.log('Coinbase BTC position response:', {
+          raw_response: btcPosition,
+        });
+      } catch (error) {
+        this.loggerService.error('Failed to fetch BTC position:', {
+          error: error.message,
+          response: error.response,
+        });
+      }
+
+      let ethPosition;
+      try {
+        ethPosition = await this.coinbaseService.getFuturesPosition('ETH-USD');
+        this.loggerService.log('Coinbase ETH position response:', {
+          raw_response: ethPosition,
+        });
+      } catch (error) {
+        this.loggerService.error('Failed to fetch ETH position:', {
+          error: error.message,
+          response: error.response,
+        });
+      }
 
       // Get alerts using existing getMT4Signals method
       let recentAlerts = [];

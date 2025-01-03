@@ -18,8 +18,10 @@ export type CreateOrderRequest = {
   side: OrderSide;
   orderConfiguration: OrderConfiguration;
   selfTradePreventionId?: string;
-  leverage?: string;
   marginType?: MarginType;
+  leverage?: string;
+  stopLoss?: string;
+  takeProfit?: string;
   retailPortfolioId?: string;
 };
 
