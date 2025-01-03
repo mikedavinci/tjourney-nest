@@ -1,4 +1,4 @@
-export const BASE_URL = 'api.coinbase.com';
+export const BASE_URL = 'https://api.coinbase.com';
 export const API_PREFIX = '/api/v3/brokerage';
 export const ALGORITHM = 'ES256';
 export const VERSION = '0.1.0';

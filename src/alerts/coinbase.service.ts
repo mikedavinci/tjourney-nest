@@ -27,16 +27,28 @@ import {
   validateAndFormatKey,
   validateECKey,
 } from './config/key-validator';
+import { LoggerService } from './services/logger.service';
+import { AlertController } from './alerts.controller';
+import { MT4SignalResponseDto } from './dto/mt4-signal.dto';
+import { Alert } from './entities/alert.entity';
+import * as moment from 'moment';
 
 @Injectable()
 export class CoinbaseService {
   private readonly logger = new Logger(CoinbaseService.name);
   private client!: RESTBase;
   private tradingState: Map<string, CommonTypes.TradingState> = new Map();
+  private lastCheckTime: Date = new Date();
+
+  // Add getter method
+  getLastCheckTime(): Date {
+    return this.lastCheckTime;
+  }
 
   constructor(
     @InjectRepository(AlertRepository)
-    private alertRepository: AlertRepository
+    private alertRepository: AlertRepository,
+    private readonly loggerService: LoggerService
   ) {
     this.initializeClient();
   }
@@ -156,7 +168,7 @@ export class CoinbaseService {
     }
   }
 
-  private async getFuturesBalanceSummary(): Promise<CommonTypes.FCMBalanceSummary> {
+  public async getFuturesBalanceSummary(): Promise<CommonTypes.FCMBalanceSummary> {
     const response = await this.client.request({
       method: method.GET,
       endpoint: `${API_PREFIX}/cfm/balance_summary`,
@@ -173,7 +185,7 @@ export class CoinbaseService {
     });
   }
 
-  private async getFuturesPosition(
+  public async getFuturesPosition(
     productId: string
   ): Promise<CommonTypes.FCMPosition | undefined> {
     const response = await this.client.request({
@@ -184,27 +196,110 @@ export class CoinbaseService {
     return response.position;
   }
 
-  @Cron('*/5 * * * *') // Run every 5 minutes
   async checkAndExecuteTrades() {
+    this.lastCheckTime = new Date();
+
     if (!COINBASE_CONFIG.TRADING_RULES.ENABLE_TRADING) {
-      this.logger.log('Trading is disabled in configuration');
+      this.loggerService.log('Trading is disabled in configuration');
       return;
     }
 
     try {
-      // Update futures balance summary first
+      // Get futures balance summary and check margin
       const balanceSummary = await this.getFuturesBalanceSummary();
-
-      // Check if we have sufficient margin
       if (!this.checkMarginRequirements(balanceSummary)) {
-        this.logger.warn('Insufficient margin for trading');
+        this.loggerService.warn('Insufficient margin for trading');
         return;
       }
 
-      await this.processCryptoAlerts('BTC');
-      await this.processCryptoAlerts('ETH');
+      // Get BTC signals directly
+      const signals = await this.getMT4Signals('BTCUSD', '30');
+      if (!signals || signals.length === 0) {
+        this.loggerService.log('No signals available for BTC');
+        return;
+      }
+
+      // Get latest signal
+      const latestSignal = signals[0];
+      this.loggerService.log('Received signal for BTC', {
+        signal: latestSignal,
+      });
+
+      // Process the signal
+      await this.processCryptoSignal('BTC', latestSignal);
     } catch (error) {
-      this.logger.error('Error in checkAndExecuteTrades:', error);
+      this.logger.error('Error in checkAndExecuteTrades:', {
+        error: error.message,
+        stack: error.stack,
+      });
+    }
+  }
+
+  private async processCryptoSignal(symbol: string, signal: any) {
+    const config = COINBASE_CONFIG.FUTURES[symbol];
+    const state = this.tradingState.get(symbol);
+
+    try {
+      // Skip if we've already processed this signal
+      if (state?.lastAlert?.timestamp === signal.timestamp) {
+        this.loggerService.log(`Signal already processed for ${symbol}`, {
+          timestamp: signal.timestamp,
+        });
+        return;
+      }
+
+      // Update state with latest signal
+      if (state) {
+        state.lastAlert = signal;
+      }
+
+      // Check if this is an actionable signal
+      const { action, isValid } = this.validateTradingSignal(signal, symbol);
+      if (!isValid) {
+        this.loggerService.log(`Invalid signal for ${symbol}`, {
+          signal: signal,
+        });
+        return;
+      }
+
+      // Get current position
+      const currentPosition = await this.getFuturesPosition(config.PRODUCT_ID);
+
+      // Handle existing position if any
+      if (currentPosition && Number(currentPosition.number_of_contracts) > 0) {
+        const currentSide =
+          currentPosition.side?.toString() === 'LONG'
+            ? CommonTypes.OrderSide.BUY
+            : CommonTypes.OrderSide.SELL;
+
+        if (currentSide !== action) {
+          await this.closePosition(symbol, currentPosition);
+        }
+      }
+
+      // Check risk management
+      if (!this.checkRiskManagement(symbol)) {
+        return;
+      }
+
+      // Calculate and execute trade
+      const orderParams = await this.calculateOrderParameters(
+        symbol,
+        action,
+        signal
+      );
+      await this.executeTrade(orderParams);
+
+      this.loggerService.log(`Successfully processed ${symbol} signal`, {
+        action: action,
+        signal: signal,
+      });
+    } catch (error) {
+      this.loggerService.error(`Error processing ${symbol} signal:`, {
+        error: error.message,
+        stack: error.stack,
+        signal: signal,
+      });
     }
   }
 
@@ -337,28 +432,57 @@ export class CoinbaseService {
   }
 
   private validateTradingSignal(
-    alert: any,
+    signal: Alert | MT4SignalResponseDto,
     symbol: string
   ): CommonTypes.TradingSignal {
-    // Skip if alert is too old (more than 5 minutes)
-    if (
-      Date.now() - alert.bartime >
-      COINBASE_CONFIG.TRADING_RULES.CHECK_INTERVAL
-    ) {
+    try {
+      // For Alert type
+      if ('bartime' in signal) {
+        const alert = signal as Alert;
+        return {
+          action: alert.alert.includes('Bullish')
+            ? CommonTypes.OrderSide.BUY
+            : CommonTypes.OrderSide.SELL,
+          isValid: true,
+        };
+      }
+
+      // For MT4SignalResponseDto type
+      const mt4Signal = signal as MT4SignalResponseDto;
+
+      // Skip if signal is too old (more than 5 minutes)
+      const signalTime = new Date(mt4Signal.timestamp).getTime();
+      if (
+        Date.now() - signalTime >
+        COINBASE_CONFIG.TRADING_RULES.CHECK_INTERVAL
+      ) {
+        this.loggerService.log('Signal too old', {
+          signalTime: mt4Signal.timestamp,
+          currentTime: new Date().toISOString(),
+        });
+        return { action: null, isValid: false };
+      }
+
+      // Skip if it's an exit signal
+      if (mt4Signal.isExit) {
+        this.loggerService.log('Exit signal detected - skipping', {
+          symbol,
+          exitType: mt4Signal.exitType,
+        });
+        return { action: null, isValid: false };
+      }
+
+      return {
+        action:
+          mt4Signal.action === 'BUY'
+            ? CommonTypes.OrderSide.BUY
+            : CommonTypes.OrderSide.SELL,
+        isValid: true,
+      };
+    } catch (error) {
+      this.loggerService.error('Error validating signal:', error);
       return { action: null, isValid: false };
     }
-
-    // Determine action based on alert pattern
-    let action: CommonTypes.OrderSide | null = null;
-    if (alert.alert.includes('Bullish Confirmation')) {
-      action = CommonTypes.OrderSide.BUY;
-    } else if (alert.alert.includes('Bearish Confirmation')) {
-      action = CommonTypes.OrderSide.SELL;
-    } else {
-      return { action: null, isValid: false };
-    }
-
-    return { action, isValid: true };
   }
 
   private async calculateOrderParameters(
@@ -502,6 +626,50 @@ export class CoinbaseService {
       this.logger.log('Daily trading stats reset');
     } catch (error) {
       this.logger.error('Error resetting daily stats:', error);
+    }
+  }
+
+  // Add method to fetch signals directly
+  private async getMT4Signals(
+    symbol: string,
+    timeframe: string
+  ): Promise<MT4SignalResponseDto[]> {
+    try {
+      const { alerts } = await this.alertRepository.getFilteredAlerts(
+        timeframe,
+        undefined,
+        1,
+        symbol,
+        1,
+        10,
+        'bartime',
+        'DESC'
+      );
+
+      return alerts.map((alert) => ({
+        ticker: alert.ticker,
+        action: alert.alert.includes('Bullish') ? 'BUY' : 'SELL',
+        price: alert.ohlcv.close,
+        timestamp: moment(alert.bartime).format('MM/DD/YYYY hh:mm:ss A'),
+        stopLoss: alert.sl2,
+        takeProfit: alert.tp2,
+        sl2: alert.sl2,
+        tp2: alert.tp2,
+        signalPattern: alert.alert,
+        ohlcv: {
+          low: alert.ohlcv.low,
+          high: alert.ohlcv.high,
+          open: alert.ohlcv.open,
+          close: alert.ohlcv.close,
+          volume: alert.ohlcv.volume,
+        },
+        timeframe: alert.tf,
+        isExit: alert.isExit || false,
+        exitType: alert.exitType,
+      }));
+    } catch (error) {
+      this.loggerService.error('Failed to fetch MT4 signals:', error);
+      return [];
     }
   }
 }

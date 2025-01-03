@@ -18,6 +18,7 @@ import {
   HttpStatus,
   ParseIntPipe,
   Param,
+  Inject,
 } from '@nestjs/common';
 import { AlertService } from './alerts.service';
 import { CreateAlertDto } from './dto/create-alert.dto';
@@ -33,6 +34,10 @@ import { MT4SignalResponseDto } from './dto/mt4-signal.dto';
 import { LuxAlgoAlert } from './entities/luxalgo.entity';
 import { LuxAlgoAlertDto } from './dto/luxalgo-alert.dto';
 import { LoggerService } from './services/logger.service';
+import { CoinbaseService } from './coinbase.service';
+import { COINBASE_CONFIG } from './config/coinbase.config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AlertRepository } from './entities/alert.repository';
 
 @ApiBearerAuth()
 @ApiTags('alerts')
@@ -40,7 +45,10 @@ import { LoggerService } from './services/logger.service';
 export class AlertController {
   constructor(
     private readonly alertService: AlertService,
-    private readonly loggerService: LoggerService
+    private readonly loggerService: LoggerService,
+    private readonly coinbaseService: CoinbaseService,
+    @InjectRepository(AlertRepository)
+    private readonly alertRepository: AlertRepository
   ) {}
 
   @Post('create-alert')
@@ -354,5 +362,97 @@ export class AlertController {
     }
 
     return { success: true, message: 'Log sent to Papertrail' };
+  }
+
+  @Get('trading-status')
+  @ApiOperation({ summary: 'Get current trading system status' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Returns current trading system status including balances and positions',
+  })
+  async getTradingStatus() {
+    try {
+      // Get futures balance summary
+      const balanceSummary =
+        await this.coinbaseService.getFuturesBalanceSummary();
+
+      // Get positions for BTC and ETH
+      const btcPosition =
+        await this.coinbaseService.getFuturesPosition('BTC-USD');
+      const ethPosition =
+        await this.coinbaseService.getFuturesPosition('ETH-USD');
+
+      // Get alerts using existing getMT4Signals method
+      let recentAlerts = [];
+      try {
+        recentAlerts = await this.getMT4Signals('BTCUSD', '30');
+        this.loggerService.log('Successfully fetched MT4 signals', {
+          alertsCount: recentAlerts.length,
+        });
+      } catch (signalError) {
+        this.loggerService.error('Failed to fetch MT4 signals:', {
+          error: signalError.message,
+        });
+      }
+
+      const tradingStatus = {
+        systemStatus: {
+          tradingEnabled: COINBASE_CONFIG.TRADING_RULES.ENABLE_TRADING,
+          timestamp: new Date().toISOString(),
+          lastCheck: this.coinbaseService.getLastCheckTime(),
+        },
+        balanceSummary: {
+          totalBalance: balanceSummary?.total_usd_balance || '0',
+          liquidationBuffer:
+            balanceSummary?.liquidation_buffer_percentage || '0',
+        },
+        positions: {
+          BTC: btcPosition
+            ? {
+                size: btcPosition.number_of_contracts,
+                side: btcPosition.side,
+                entryPrice: btcPosition.avg_entry_price,
+                unrealizedPnl: btcPosition.unrealized_pnl,
+              }
+            : null,
+          ETH: ethPosition
+            ? {
+                size: ethPosition.number_of_contracts,
+                side: ethPosition.side,
+                entryPrice: ethPosition.avg_entry_price,
+                unrealizedPnl: ethPosition.unrealized_pnl,
+              }
+            : null,
+        },
+        riskManagement: {
+          maxDailyLoss: COINBASE_CONFIG.RISK_MANAGEMENT.MAX_DAILY_LOSS_PERCENT,
+          maxOpenPositions: COINBASE_CONFIG.RISK_MANAGEMENT.MAX_OPEN_POSITIONS,
+          minAccountBalance:
+            COINBASE_CONFIG.RISK_MANAGEMENT.MIN_ACCOUNT_BALANCE,
+        },
+        latestSignals: recentAlerts,
+      };
+
+      this.loggerService.log('Trading status requested', {
+        balanceUSD: tradingStatus.balanceSummary.totalBalance,
+        activePositions: {
+          BTC: !!tradingStatus.positions.BTC,
+          ETH: !!tradingStatus.positions.ETH,
+        },
+        signalsCount: recentAlerts.length,
+      });
+
+      return tradingStatus;
+    } catch (error) {
+      this.loggerService.error('Error fetching trading status:', {
+        error: error.message,
+        stack: error.stack,
+      });
+      throw new HttpException(
+        'Failed to fetch trading status',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 }
