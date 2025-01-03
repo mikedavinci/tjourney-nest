@@ -31,6 +31,22 @@ export function verifyKey(privateKeyString: string): boolean {
   }
 }
 
+export function validateECKey(privateKey: string): boolean {
+  try {
+    // Create key object
+    const keyObject = crypto.createPrivateKey(privateKey);
+
+    // Verify it's an EC key
+    const keyDetails = keyObject.asymmetricKeyDetails;
+    return (
+      keyDetails?.namedCurve === 'prime256v1' ||
+      keyDetails?.namedCurve === 'P-256'
+    );
+  } catch (error) {
+    return false;
+  }
+}
+
 // Function to inspect key format
 export function inspectKey(privateKeyString: string): void {
   console.log('Key inspection:');

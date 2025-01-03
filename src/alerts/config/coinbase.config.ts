@@ -2,8 +2,9 @@
 
 export const COINBASE_CONFIG = {
   // API Configuration
-  API_KEY: process.env.COINBASE_API_KEY,
-  API_SECRET: process.env.COINBASE_API_SECRET,
+  ORG_ID: process.env.COINBASE_ORG_ID,
+  KEY_ID: process.env.COINBASE_KEY_ID,
+  PRIVATE_KEY: process.env.COINBASE_PRIVATE_KEY,
 
   // Trading Parameters
   FUTURES: {

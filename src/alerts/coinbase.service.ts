@@ -22,8 +22,11 @@ import { COINBASE_CONFIG } from './config/coinbase.config';
 import { API_PREFIX } from './coinbase/constants';
 import { method } from './coinbase/rest/types/request-types';
 import { formatPrivateKey } from './config/key-utils';
-import { inspectKey, validateAndFormatKey } from './config/key-validator';
-import { debugPrivateKey } from './coinbase/jwt-generator';
+import {
+  inspectKey,
+  validateAndFormatKey,
+  validateECKey,
+} from './config/key-validator';
 
 @Injectable()
 export class CoinbaseService {
@@ -35,72 +38,83 @@ export class CoinbaseService {
     @InjectRepository(AlertRepository)
     private alertRepository: AlertRepository
   ) {
-    // this.initializeClient();
+    this.initializeClient();
   }
 
-  private initializeClient() {
-    const apiKey = process.env.COINBASE_API_KEY?.trim();
-    const privateKey = process.env.COINBASE_API_SECRET?.trim();
-
-    console.log('\n=== Coinbase Credentials Debug ===');
-    console.log('API Key length:', apiKey?.length);
-    console.log('API Key:', apiKey);
-    console.log('\nPrivate Key length:', privateKey?.length);
-    console.log('Private Key first 50 chars:', privateKey?.substring(0, 50));
-    console.log(
-      'Private Key last 50 chars:',
-      privateKey?.substring(privateKey.length - 50)
-    );
-    console.log('Contains BEGIN:', privateKey?.includes('BEGIN'));
-    console.log('Contains END:', privateKey?.includes('END'));
-    console.log('Contains newlines:', privateKey?.includes('\n'));
-    console.log('Contains \\n:', privateKey?.includes('\\n'));
-    console.log('=================================\n');
-
-    if (!apiKey || !privateKey) {
-      throw new Error('COINBASE_API_KEY and COINBASE_API_SECRET must be set');
-    }
+  private async initializeClient() {
+    this.logger.log('\n=== Initializing Coinbase Client ===');
 
     try {
-      // Debug key format
-      console.log('\nDebugging API key format...');
-      debugPrivateKey(privateKey);
+      // Get and format API credentials
+      const orgId = process.env.COINBASE_ORG_ID?.trim();
+      const keyId = process.env.COINBASE_KEY_ID?.trim();
+      const privateKey = process.env.COINBASE_PRIVATE_KEY?.trim();
 
-      // Initialize client
+      if (!orgId || !keyId || !privateKey) {
+        throw new Error(
+          'COINBASE_ORG_ID, COINBASE_KEY_ID, and COINBASE_PRIVATE_KEY must be set'
+        );
+      }
+
+      // Format the API key as required by Coinbase
+      const apiKey = `organizations/${orgId}/apiKeys/${keyId}`;
+
+      this.logger.debug('Credentials Check:', {
+        hasOrgId: !!orgId,
+        hasKeyId: !!keyId,
+        hasPrivateKey: !!privateKey,
+        formattedApiKey: apiKey,
+      });
+
+      // Initialize REST client with correctly formatted key
       this.client = new RESTBase(apiKey, privateKey);
 
-      // Test connection
-      this.testConnection().then((connected) => {
-        if (!connected) {
-          throw new Error('Failed to connect to Coinbase API');
-        }
-        console.log('Successfully connected to Coinbase API');
+      // Test connection with correct endpoint
+      const timeResponse = await this.client.request({
+        method: method.GET,
+        endpoint: '/api/v3/brokerage/time',
+        isPublic: true,
       });
+
+      this.logger.debug('Connection test successful:', timeResponse);
+      return true;
     } catch (error) {
-      this.logger.error('Failed to initialize Coinbase client:', {
-        error: error.message,
-        stack: error.stack,
-      });
+      this.logger.error('Failed to initialize:', error);
       throw error;
     }
   }
 
   private async testConnection(): Promise<boolean> {
     try {
-      console.log('\nTesting connection to Coinbase API...');
-      const response = await this.client.request({
+      this.logger.debug('Testing connection...');
+
+      // Try the time endpoint first (public)
+      const timeResponse = await this.client.request({
+        method: method.GET,
+        endpoint: '/api/v3/time',
+        isPublic: true,
+      });
+
+      this.logger.debug('Public endpoint test successful:', timeResponse);
+
+      // Then try an authenticated endpoint
+      const accountsResponse = await this.client.request({
         method: method.GET,
         endpoint: `${API_PREFIX}/accounts`,
         isPublic: false,
       });
-      console.log('Raw API Response:', response);
+
+      this.logger.debug('Authenticated endpoint test successful:', {
+        hasResponse: !!accountsResponse,
+      });
+
       return true;
     } catch (error) {
       this.logger.error('Connection test failed:', {
-        error: error.message,
-        statusCode: error.statusCode,
+        message: error.message,
+        name: error.constructor.name,
+        code: error.code,
         response: error.response,
-        headers: error.headers,
       });
       return false;
     }

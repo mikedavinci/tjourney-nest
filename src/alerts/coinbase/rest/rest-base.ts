@@ -1,154 +1,97 @@
 // src/alerts/coinbase/rest/rest-base.ts
 
 import { generateToken } from '../jwt-generator';
-import fetch, { Headers, RequestInit, Response } from 'node-fetch';
+import fetch from 'node-fetch';
 import { BASE_URL, USER_AGENT } from '../constants';
 import { RequestOptions } from './types/request-types';
-import { handleException } from './errors';
+import { Logger } from '@nestjs/common';
 
 export class RESTBase {
   private apiKey: string | undefined;
   private apiSecret: string | undefined;
+  private logger = new Logger('RESTBase');
 
   constructor(key?: string, secret?: string) {
-    if (!key || !secret) {
-      console.log('Could not authenticate. Only public endpoints accessible.');
-    }
+    this.logger.debug('Initializing RESTBase:', {
+      hasKey: !!key,
+      keyLength: key?.length,
+      hasSecret: !!secret,
+      secretLength: secret?.length,
+    });
 
-    console.log('\n=== RESTBase Initialization ===');
-    console.log('API Key provided:', !!key);
-    console.log('API Secret provided:', !!secret);
-    console.log('API Key length:', key?.length);
-    console.log('API Secret length:', secret?.length);
+    if (!key || !secret) {
+      throw new Error('API key and secret are required');
+    }
 
     this.apiKey = key;
     this.apiSecret = secret;
   }
 
   async request(options: RequestOptions): Promise<any> {
-    console.log('\n=== Making API Request ===');
-    console.log('Method:', options.method);
-    console.log('Endpoint:', options.endpoint);
-    console.log('Is Public:', options.isPublic);
-
-    const { method, endpoint, isPublic } = options;
-    let { queryParams, bodyParams } = options;
-
-    queryParams = queryParams ? this.filterParams(queryParams) : {};
-    if (bodyParams !== undefined) {
-      bodyParams = bodyParams ? this.filterParams(bodyParams) : {};
-    }
-
-    return this.prepareRequest(
-      method,
-      endpoint,
-      queryParams,
-      bodyParams,
-      isPublic
-    );
-  }
-
-  private async prepareRequest(
-    httpMethod: string,
-    urlPath: string,
-    queryParams?: Record<string, any>,
-    bodyParams?: Record<string, any>,
-    isPublic?: boolean
-  ) {
-    console.log('\n=== Preparing Request ===');
-    const headers: Headers = this.setHeaders(httpMethod, urlPath, isPublic);
-
-    // Log headers (excluding sensitive data)
-    console.log('Request Headers:', {
-      'Content-Type': headers.get('Content-Type'),
-      'User-Agent': headers.get('User-Agent'),
-      Authorization: headers.has('Authorization') ? '[PRESENT]' : '[MISSING]',
+    this.logger.debug('Making request:', {
+      method: options.method,
+      endpoint: options.endpoint,
+      isPublic: options.isPublic,
+      hasBody: !!options.bodyParams,
     });
 
-    const requestOptions: RequestInit = {
-      method: httpMethod,
-      headers: headers,
-      body: bodyParams ? JSON.stringify(bodyParams) : undefined,
-    };
-
-    const queryString = this.buildQueryString(queryParams);
-    const url = `https://${BASE_URL}${urlPath}${queryString}`;
-    console.log('Full URL:', url);
-
-    return this.sendRequest(headers, requestOptions, url);
-  }
-
-  private async sendRequest(
-    headers: Headers,
-    requestOptions: RequestInit,
-    url: string
-  ) {
-    console.log('\n=== Sending Request ===');
-    console.log('URL:', url);
-    console.log('Method:', requestOptions.method);
-
-    const response: Response = await fetch(url, requestOptions);
-    console.log('Response Status:', response.status);
-    console.log('Response Status Text:', response.statusText);
-
-    const responseText = await response.text();
-    console.log('Raw Response:', responseText);
-
-    handleException(response, responseText, response.statusText);
-    return responseText;
-  }
-
-  private setHeaders(httpMethod: string, urlPath: string, isPublic?: boolean) {
-    console.log('\n=== Setting Headers ===');
-    const headers: Headers = new Headers();
-    headers.append('Content-Type', 'application/json');
-    headers.append('User-Agent', USER_AGENT);
-
-    if (this.apiKey !== undefined && this.apiSecret !== undefined) {
+    try {
+      // Generate JWT token
+      this.logger.debug('Generating JWT token...');
       const token = generateToken(
-        httpMethod,
-        urlPath,
-        this.apiKey,
-        this.apiSecret
+        options.method,
+        options.endpoint,
+        this.apiKey!,
+        this.apiSecret!
       );
-      console.log('JWT Token generated:', token.substring(0, 50) + '...');
-      headers.append('Authorization', `Bearer ${token}`);
-    } else if (isPublic == undefined || isPublic == false) {
-      throw new Error(
-        'Attempting to access authenticated endpoint with invalid API_KEY or API_SECRET.'
-      );
-    }
+      this.logger.debug('JWT token generated successfully');
 
-    return headers;
-  }
+      // Prepare headers
+      const headers = {
+        'Content-Type': 'application/json',
+        'User-Agent': USER_AGENT,
+        Authorization: `Bearer ${token}`,
+      };
 
-  private filterParams(data: Record<string, any>) {
-    const filteredParams: Record<string, any> = {};
-    for (const key in data) {
-      if (data[key] !== undefined) {
-        filteredParams[key] = data[key];
+      // Ensure we have a complete URL with protocol
+      const baseUrl = BASE_URL.startsWith('http')
+        ? BASE_URL
+        : `https://${BASE_URL}`;
+      const fullUrl = `${baseUrl}${options.endpoint}`;
+      this.logger.debug('Full request URL:', fullUrl);
+
+      // Make request
+      const response = await fetch(fullUrl, {
+        method: options.method,
+        headers,
+        body: options.bodyParams
+          ? JSON.stringify(options.bodyParams)
+          : undefined,
+      });
+
+      // Log response details
+      this.logger.debug('Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers),
+      });
+
+      const responseText = await response.text();
+      this.logger.debug('Response body:', responseText.substring(0, 200));
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${responseText}`);
       }
+
+      return JSON.parse(responseText);
+    } catch (error) {
+      this.logger.error('Request failed:', {
+        error: error.message,
+        name: error.constructor.name,
+        code: error.code,
+        stack: error.stack,
+      });
+      throw error;
     }
-    return filteredParams;
-  }
-
-  private buildQueryString(queryParams?: Record<string, any>): string {
-    if (!queryParams || Object.keys(queryParams).length === 0) {
-      return '';
-    }
-
-    const queryString = Object.entries(queryParams)
-      .flatMap(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.map(
-            (item) => `${encodeURIComponent(key)}=${encodeURIComponent(item)}`
-          );
-        } else {
-          return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
-        }
-      })
-      .join('&');
-
-    return `?${queryString}`;
   }
 }
