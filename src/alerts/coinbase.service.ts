@@ -231,52 +231,51 @@ export class CoinbaseService {
     return response.position;
   }
 
-  @Cron('*/5 * * * *') // Run every 5 minutes
-  async checkAndExecuteTrades() {
-    this.lastCheckTime = new Date();
+  // @Cron('*/5 * * * *') // Run every 5 minutes
+  // async checkAndExecuteTrades() {
+  //   this.lastCheckTime = new Date();
 
-    if (!COINBASE_CONFIG.TRADING_RULES.ENABLE_TRADING) {
-      this.loggerService.log('Trading is disabled in configuration');
-      return;
-    }
+  //   if (!COINBASE_CONFIG.TRADING_RULES.ENABLE_TRADING) {
+  //     this.loggerService.log('Trading is disabled in configuration');
+  //     return;
+  //   }
 
-    try {
-      // Get futures balance summary and check margin
-      const balanceSummary = await this.getFuturesBalanceSummary();
-      if (!this.checkMarginRequirements(balanceSummary)) {
-        this.loggerService.warn('Insufficient margin for trading');
-        return;
-      }
+  //   try {
+  //     // Get futures balance summary and check margin
+  //     const balanceSummary = await this.getFuturesBalanceSummary();
+  //     if (!this.checkMarginRequirements(balanceSummary)) {
+  //       this.loggerService.warn('Insufficient margin for trading');
+  //       return;
+  //     }
 
-      // Process BTC (30min timeframe)
-      const btcSignals = await this.getMT4Signals('BTCUSD', '30');
-      if (btcSignals && btcSignals.length > 0) {
-        this.loggerService.log('Processing BTC signals (30min)', {
-          signal: btcSignals[0],
-        });
-        await this.processCryptoSignal('BTC', btcSignals[0]);
-      } else {
-        this.loggerService.log('No signals available for BTC');
-      }
+  //     // Process BTC (30min timeframe)
+  //     const btcSignals = await this.getMT4Signals('BTCUSD', '30');
+  //     if (btcSignals && btcSignals.length > 0) {
+  //       this.loggerService.log('Processing BTC signals (30min)', {
+  //         signal: btcSignals[0],
+  //       });
+  //       await this.processCryptoSignal('BTC', btcSignals[0]);
+  //     } else {
+  //       this.loggerService.log('No signals available for BTC');
+  //     }
 
-      // Process ETH (15min timeframe)
-      const ethSignals = await this.getMT4Signals('ETHUSD', '15');
-      if (ethSignals && ethSignals.length > 0) {
-        this.loggerService.log('Processing ETH signals (15min)', {
-          signal: ethSignals[0],
-        });
-        await this.processCryptoSignal('ETH', ethSignals[0]);
-      } else {
-        this.loggerService.log('No signals available for ETH');
-      }
-    } catch (error) {
-      this.logger.error('Error in checkAndExecuteTrades:', {
-        error: error.message,
-        stack: error.stack,
-      });
-    }
-  }
-
+  //     // Process ETH (15min timeframe)
+  //     const ethSignals = await this.getMT4Signals('ETHUSD', '15');
+  //     if (ethSignals && ethSignals.length > 0) {
+  //       this.loggerService.log('Processing ETH signals (15min)', {
+  //         signal: ethSignals[0],
+  //       });
+  //       await this.processCryptoSignal('ETH', ethSignals[0]);
+  //     } else {
+  //       this.loggerService.log('No signals available for ETH');
+  //     }
+  //   } catch (error) {
+  //     this.logger.error('Error in checkAndExecuteTrades:', {
+  //       error: error.message,
+  //       stack: error.stack,
+  //     });
+  //   }
+  // }
   private async processCryptoSignal(symbol: string, signal: any) {
     this.loggerService.log(`Processing signal for ${symbol}`, {
       timeframe: symbol === 'BTC' ? '30' : '15',
