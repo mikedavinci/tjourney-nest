@@ -23,6 +23,7 @@ import { API_PREFIX } from './coinbase/constants';
 import { method } from './coinbase/rest/types/request-types';
 import { formatPrivateKey } from './config/key-utils';
 import { inspectKey, validateAndFormatKey } from './config/key-validator';
+import { debugPrivateKey } from './coinbase/jwt-generator';
 
 @Injectable()
 export class CoinbaseService {
@@ -34,69 +35,51 @@ export class CoinbaseService {
     @InjectRepository(AlertRepository)
     private alertRepository: AlertRepository
   ) {
-    this.initializeClient().catch((error) => {
-      this.logger.error(
-        'Failed to initialize client during construction:',
-        error
-      );
-      throw error;
-    });
+    // this.initializeClient();
   }
 
-  private async initializeClient() {
-    const apiKey = process.env.COINBASE_API_KEY;
-    const apiSecret = process.env.COINBASE_API_SECRET;
+  private initializeClient() {
+    const apiKey = process.env.COINBASE_API_KEY?.trim();
+    const privateKey = process.env.COINBASE_API_SECRET?.trim();
 
-    if (!apiKey || !apiSecret) {
-      throw new Error(
-        'COINBASE_API_KEY and COINBASE_API_SECRET must be set in environment variables'
-      );
+    console.log('\n=== Coinbase Credentials Debug ===');
+    console.log('API Key length:', apiKey?.length);
+    console.log('API Key:', apiKey);
+    console.log('\nPrivate Key length:', privateKey?.length);
+    console.log('Private Key first 50 chars:', privateKey?.substring(0, 50));
+    console.log(
+      'Private Key last 50 chars:',
+      privateKey?.substring(privateKey.length - 50)
+    );
+    console.log('Contains BEGIN:', privateKey?.includes('BEGIN'));
+    console.log('Contains END:', privateKey?.includes('END'));
+    console.log('Contains newlines:', privateKey?.includes('\n'));
+    console.log('Contains \\n:', privateKey?.includes('\\n'));
+    console.log('=================================\n');
+
+    if (!apiKey || !privateKey) {
+      throw new Error('COINBASE_API_KEY and COINBASE_API_SECRET must be set');
     }
 
     try {
-      this.logger.debug('Initializing Coinbase client...', {
-        keyLength: apiKey.length,
-        secretLength: apiSecret.length,
+      // Debug key format
+      console.log('\nDebugging API key format...');
+      debugPrivateKey(privateKey);
+
+      // Initialize client
+      this.client = new RESTBase(apiKey, privateKey);
+
+      // Test connection
+      this.testConnection().then((connected) => {
+        if (!connected) {
+          throw new Error('Failed to connect to Coinbase API');
+        }
+        console.log('Successfully connected to Coinbase API');
       });
-
-      // Initialize REST client with raw credentials
-      this.client = new RESTBase(apiKey, apiSecret);
-
-      // Test connection with a simpler endpoint first
-      const response = await this.client.request({
-        method: method.GET,
-        endpoint: '/api/v3/brokerage/time', // Use time endpoint for initial test
-        isPublic: true,
-      });
-
-      this.logger.debug('Time endpoint response:', response);
-
-      if (!response) {
-        throw new Error('No response from time endpoint');
-      }
-
-      this.logger.log('Basic connectivity test passed');
-
-      // Now test authenticated endpoint
-      const accountsResponse = await this.client.request({
-        method: method.GET,
-        endpoint: `${API_PREFIX}/accounts`,
-        isPublic: false,
-      });
-
-      this.logger.debug('Accounts endpoint response:', accountsResponse);
-
-      // Initialize trading state
-      await this.initializeTradingState();
-      this.logger.log('Trading state initialized');
-
-      return true;
     } catch (error) {
-      this.logger.error('Initialization failed:', {
+      this.logger.error('Failed to initialize Coinbase client:', {
         error: error.message,
         stack: error.stack,
-        type: error.constructor.name,
-        response: error.response,
       });
       throw error;
     }
@@ -104,20 +87,20 @@ export class CoinbaseService {
 
   private async testConnection(): Promise<boolean> {
     try {
-      // Try to get balance summary as a connection test
+      console.log('\nTesting connection to Coinbase API...');
       const response = await this.client.request({
         method: method.GET,
         endpoint: `${API_PREFIX}/accounts`,
         isPublic: false,
       });
-
-      this.logger.log('Connection test successful');
+      console.log('Raw API Response:', response);
       return true;
     } catch (error) {
       this.logger.error('Connection test failed:', {
         error: error.message,
         statusCode: error.statusCode,
         response: error.response,
+        headers: error.headers,
       });
       return false;
     }
