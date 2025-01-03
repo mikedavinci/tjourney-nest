@@ -7,11 +7,25 @@ import { AlertRepository } from './entities/alert.repository';
 import { LuxAlgoAlert } from './entities/luxalgo.entity';
 import { LuxAlgoRepository } from './entities/luxalgo.repository';
 import { LoggerService } from './services/logger.service';
+import { CoinbaseService } from './coinbase.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Alert, AlertRepository, LuxAlgoAlert, LuxAlgoRepository])],
-  providers: [AlertService, AlertRepository, LuxAlgoRepository, LoggerService],
+  imports: [
+    TypeOrmModule.forFeature([
+      Alert,
+      AlertRepository,
+      LuxAlgoAlert,
+      LuxAlgoRepository,
+    ]),
+  ],
+  providers: [
+    AlertService,
+    AlertRepository,
+    LuxAlgoRepository,
+    LoggerService,
+    CoinbaseService,
+  ],
   controllers: [AlertController],
-  exports: [AlertService]
+  exports: [AlertService, CoinbaseService],
 })
 export class AlertModule {}
