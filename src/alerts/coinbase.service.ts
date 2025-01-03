@@ -27,30 +27,99 @@ import { inspectKey, validateAndFormatKey } from './config/key-validator';
 @Injectable()
 export class CoinbaseService {
   private readonly logger = new Logger(CoinbaseService.name);
-  private readonly client: RESTBase;
+  private client!: RESTBase;
   private tradingState: Map<string, CommonTypes.TradingState> = new Map();
 
   constructor(
     @InjectRepository(AlertRepository)
     private alertRepository: AlertRepository
   ) {
-    if (!COINBASE_CONFIG.API_SECRET || !COINBASE_CONFIG.API_KEY) {
-      throw new Error('Coinbase API credentials not configured');
+    this.initializeClient().catch((error) => {
+      this.logger.error(
+        'Failed to initialize client during construction:',
+        error
+      );
+      throw error;
+    });
+  }
+
+  private async initializeClient() {
+    const apiKey = process.env.COINBASE_API_KEY;
+    const apiSecret = process.env.COINBASE_API_SECRET;
+
+    if (!apiKey || !apiSecret) {
+      throw new Error(
+        'COINBASE_API_KEY and COINBASE_API_SECRET must be set in environment variables'
+      );
     }
 
     try {
-      // Validate and format the key before using it
-      inspectKey(COINBASE_CONFIG.API_SECRET); // Debug key format
-      const formattedKey = validateAndFormatKey(COINBASE_CONFIG.API_SECRET);
+      this.logger.debug('Initializing Coinbase client...', {
+        keyLength: apiKey.length,
+        secretLength: apiSecret.length,
+      });
 
-      this.client = new RESTBase(COINBASE_CONFIG.API_KEY, formattedKey);
-      this.initializeTradingState();
+      // Initialize REST client with raw credentials
+      this.client = new RESTBase(apiKey, apiSecret);
+
+      // Test connection with a simpler endpoint first
+      const response = await this.client.request({
+        method: method.GET,
+        endpoint: '/api/v3/brokerage/time', // Use time endpoint for initial test
+        isPublic: true,
+      });
+
+      this.logger.debug('Time endpoint response:', response);
+
+      if (!response) {
+        throw new Error('No response from time endpoint');
+      }
+
+      this.logger.log('Basic connectivity test passed');
+
+      // Now test authenticated endpoint
+      const accountsResponse = await this.client.request({
+        method: method.GET,
+        endpoint: `${API_PREFIX}/accounts`,
+        isPublic: false,
+      });
+
+      this.logger.debug('Accounts endpoint response:', accountsResponse);
+
+      // Initialize trading state
+      await this.initializeTradingState();
+      this.logger.log('Trading state initialized');
+
+      return true;
     } catch (error) {
-      this.logger.error('Failed to initialize Coinbase client:', {
+      this.logger.error('Initialization failed:', {
         error: error.message,
         stack: error.stack,
+        type: error.constructor.name,
+        response: error.response,
       });
       throw error;
+    }
+  }
+
+  private async testConnection(): Promise<boolean> {
+    try {
+      // Try to get balance summary as a connection test
+      const response = await this.client.request({
+        method: method.GET,
+        endpoint: `${API_PREFIX}/accounts`,
+        isPublic: false,
+      });
+
+      this.logger.log('Connection test successful');
+      return true;
+    } catch (error) {
+      this.logger.error('Connection test failed:', {
+        error: error.message,
+        statusCode: error.statusCode,
+        response: error.response,
+      });
+      return false;
     }
   }
 
@@ -58,13 +127,16 @@ export class CoinbaseService {
     try {
       // Get initial futures balance summary
       const balanceSummary = await this.getFuturesBalanceSummary();
+      this.logger.debug('Retrieved balance summary');
 
       // Get current positions
       const positions = await this.listFuturesPositions();
+      this.logger.debug('Retrieved positions');
 
+      // Initialize state for each symbol
       ['BTC', 'ETH'].forEach((symbol) => {
         const currentPosition = positions.positions?.find(
-          (pos) => pos.product_id === COINBASE_CONFIG.FUTURES[symbol].PRODUCT_ID
+          (pos) => pos.product_id === `${symbol}-USD`
         );
 
         this.tradingState.set(symbol, {
@@ -77,9 +149,12 @@ export class CoinbaseService {
         });
       });
 
-      this.logger.log('Trading state initialized with futures data');
+      this.logger.log('Trading state initialized for all symbols');
     } catch (error) {
-      this.logger.error('Error initializing trading state:', error);
+      this.logger.error('Failed to initialize trading state:', {
+        error: error.message,
+        stack: error.stack,
+      });
       throw error;
     }
   }

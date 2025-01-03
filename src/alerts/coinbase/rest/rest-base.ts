@@ -60,11 +60,37 @@ export class RESTBase {
     requestOptions: RequestInit,
     url: string
   ) {
-    const response: Response = await fetch(url, requestOptions);
-    const responseText = await response.text();
-    handleException(response, responseText, response.statusText);
+    try {
+      console.log('Sending request:', {
+        url,
+        method: requestOptions.method,
+        headers: Object.fromEntries(headers.entries()),
+        hasBody: !!requestOptions.body,
+      });
 
-    return responseText;
+      const response: Response = await fetch(url, requestOptions);
+      const responseText = await response.text();
+
+      console.log('Received response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: responseText.substring(0, 200), // First 200 chars for logging
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${responseText}`);
+      }
+
+      return JSON.parse(responseText);
+    } catch (error) {
+      console.error('Request failed:', {
+        error: error.message,
+        url,
+        method: requestOptions.method,
+      });
+      throw error;
+    }
   }
 
   setHeaders(httpMethod: string, urlPath: string, isPublic?: boolean) {

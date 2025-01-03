@@ -1,22 +1,22 @@
-// src/jwt-generator.ts
-
 import { BASE_URL, ALGORITHM, JWT_ISSUER } from './constants';
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
 
-function formatAndConvertKey(privateKeyString: string): Buffer {
-  try {
-    // First, try to convert directly if it's already in the correct format
-    return Buffer.from(privateKeyString, 'base64');
-  } catch (error) {
-    // If that fails, try to clean and format the key
-    const cleanKey = privateKeyString
-      .replace('-----BEGIN EC PRIVATE KEY-----', '')
-      .replace('-----END EC PRIVATE KEY-----', '')
-      .replace(/[\r\n]/g, '');
+function formatPrivateKey(privateKeyString: string): string {
+  // Clean up the key by removing any existing formatting
+  const cleanKey = privateKeyString
+    .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+    .replace(/-----END PRIVATE KEY-----/g, '')
+    .replace(/-----BEGIN EC PRIVATE KEY-----/g, '')
+    .replace(/-----END EC PRIVATE KEY-----/g, '')
+    .replace(/\s/g, '');
 
-    return Buffer.from(cleanKey, 'base64');
-  }
+  // Format as PKCS8
+  return [
+    '-----BEGIN PRIVATE KEY-----',
+    cleanKey.match(/.{1,64}/g)?.join('\n'),
+    '-----END PRIVATE KEY-----',
+  ].join('\n');
 }
 
 export function generateToken(
@@ -26,7 +26,7 @@ export function generateToken(
   apiSecret: string
 ): string {
   try {
-    const keyBuffer = formatAndConvertKey(apiSecret);
+    const formattedKey = formatPrivateKey(apiSecret);
     const uri = `${requestMethod} ${BASE_URL}${requestPath}`;
 
     const payload = {
@@ -37,32 +37,22 @@ export function generateToken(
       uri,
     };
 
-    const header = {
-      alg: ALGORITHM,
-      kid: apiKey,
-      nonce: crypto.randomBytes(16).toString('hex'),
-    };
-
-    const privateKey = {
-      key: keyBuffer,
-      format: 'der',
-      type: 'pkcs8',
-      passphrase: '',
-    };
-
     const options: jwt.SignOptions = {
-      algorithm: ALGORITHM as jwt.Algorithm,
-      header: header,
+      algorithm: 'ES256',
+      header: {
+        alg: 'ES256',
+        kid: apiKey,
+        typ: 'JWT',
+      },
     };
 
-    return jwt.sign(payload, privateKey, options);
+    return jwt.sign(payload, formattedKey, options);
   } catch (error) {
-    console.error('JWT Signing Error Details:', {
-      error: error.message,
-      algorithm: ALGORITHM,
-      errorName: error.name,
-      errorCode: error.code,
+    console.error('JWT Generation Error:', {
+      message: error.message,
+      name: error.name,
+      code: error.code,
     });
-    throw new Error(`Failed to generate JWT token: ${error.message}`);
+    throw error;
   }
 }
